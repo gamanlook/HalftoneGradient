@@ -805,9 +805,13 @@ export default function HalftoneMeshGradient() {
                 link.click();
               }
             }}>Export Asset</button>
-            <div className="text-center">
-              <a href="https://shaders.paper.design" target="_blank" rel="noopener noreferrer" className="text-[10px] text-white/30 hover:text-white/60 transition-colors font-sans decoration-white/20 underline-offset-4 hover:underline">
-                Powered by Paper Shaders.
+            <div className="flex justify-center items-center gap-3 text-[10px] text-white/30 font-sans mt-2">
+              <a href="https://github.com/gamanlook/HalftoneGradient" target="_blank" rel="noopener noreferrer" className="hover:text-white/60 transition-colors decoration-white/20 underline-offset-4 hover:underline">
+                View on GitHub
+              </a>
+              <span>•</span>
+              <a href="https://shaders.paper.design" target="_blank" rel="noopener noreferrer" className="hover:text-white/60 transition-colors decoration-white/20 underline-offset-4 hover:underline">
+                Shaders by Paper
               </a>
             </div>
             {/* Required Notice: Copyright Lost Coast Labs, Inc. */}
