@@ -1,8 +1,18 @@
 # Halftone Gradient
 
+<img width="1200" height="720" alt="halftone-gradient vercel app_" src="https://github.com/user-attachments/assets/6016425f-405e-43db-8768-cf3e2a6406c1" />
+
+<br>
+
 👉 [Live Demo](https://halftone-gradient.vercel.app/)
 
-----
+<br>
+<br>
+<br>
+<br>
+<br>
+
+---
 
 ### Acknowledgements
 
