@@ -891,9 +891,9 @@ export default function HalftoneMeshGradient() {
               </h3>
               <div className="space-y-4">
                 <SliderControl label="Dot Size" value={dotSize} min={0.01} max={1} step={0.01} onChange={setDotSize} />
-                <SliderControl label="Contrast" value={contrast} min={0} max={2} step={0.01} onChange={setContrast} />
                 <SliderControl label="Grid Noise" value={gridNoise} min={0} max={1} step={0.01} onChange={setGridNoise} />
                 <SliderControl label="Softness" value={softness} min={0} max={1} step={0.01} onChange={setSoftness} />
+                <SliderControl label="Contrast" value={contrast} min={0} max={2} step={0.01} onChange={setContrast} />
               </div>
             </section>
           ) : (
