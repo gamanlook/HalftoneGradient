@@ -361,6 +361,135 @@ function SliderControl({ label, value, min, max, step, onChange }: SliderControl
   );
 }
 
+function hexToHsv(hex: string) {
+  if (hex.startsWith('#')) hex = hex.slice(1);
+  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+  let r = parseInt(hex.substring(0, 2), 16) / 255;
+  let g = parseInt(hex.substring(2, 4), 16) / 255;
+  let b = parseInt(hex.substring(4, 6), 16) / 255;
+
+  let max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0, v = max;
+
+  let d = max - min;
+  s = max === 0 ? 0 : d / max;
+
+  if (max === min) {
+    h = 0; // achromatic
+  } else {
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+
+  return { h: h * 360, s: s * 100, v: v * 100 };
+}
+
+function hsvToHex(h: number, s: number, v: number) {
+  let hNormalized = (h % 360) / 360;
+  if (hNormalized < 0) hNormalized += 1;
+  let sNormalized = Math.max(0, Math.min(100, s)) / 100;
+  let vNormalized = Math.max(0, Math.min(100, v)) / 100;
+
+  let r = 0, g = 0, b = 0;
+  let i = Math.floor(hNormalized * 6);
+  let f = hNormalized * 6 - i;
+  let p = vNormalized * (1 - sNormalized);
+  let q = vNormalized * (1 - f * sNormalized);
+  let t = vNormalized * (1 - (1 - f) * sNormalized);
+
+  switch (i % 6) {
+    case 0: r = vNormalized; g = t; b = p; break;
+    case 1: r = q; g = vNormalized; b = p; break;
+    case 2: r = p; g = vNormalized; b = t; break;
+    case 3: r = p; g = q; b = vNormalized; break;
+    case 4: r = t; g = p; b = vNormalized; break;
+    case 5: r = vNormalized; g = p; b = q; break;
+  }
+
+  const toHex = (x: number) => {
+    const hex = Math.round(x * 255).toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  };
+
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+function HSVColorPicker({ color, onChange }: { color: string, onChange: (c: string) => void }) {
+  const [hsv, setHsv] = useState(() => hexToHsv(color));
+
+  useEffect(() => {
+    const currentHex = hsvToHex(hsv.h, hsv.s, hsv.v);
+    if (color.toLowerCase() !== currentHex.toLowerCase()) {
+      setHsv(hexToHsv(color));
+    }
+  }, [color, hsv]);
+
+  const handleH = (h: number) => {
+    const newHsv = { ...hsv, h };
+    setHsv(newHsv);
+    onChange(hsvToHex(newHsv.h, newHsv.s, newHsv.v));
+  };
+  const handleS = (s: number) => {
+    const newHsv = { ...hsv, s };
+    setHsv(newHsv);
+    onChange(hsvToHex(newHsv.h, newHsv.s, newHsv.v));
+  };
+  const handleV = (v: number) => {
+    const newHsv = { ...hsv, v };
+    setHsv(newHsv);
+    onChange(hsvToHex(newHsv.h, newHsv.s, newHsv.v));
+  };
+
+  const sColor0 = hsvToHex(hsv.h, 0, hsv.v);
+  const sColor100 = hsvToHex(hsv.h, 100, hsv.v);
+  const vColor0 = '#000000';
+  const vColor100 = hsvToHex(hsv.h, hsv.s, 100);
+
+  return (
+    <div className="space-y-5">
+      {/* H */}
+      <div className="space-y-2">
+        <div className="flex justify-between text-[11px] font-mono text-white/60">
+            <span>Hue</span><span>{Math.round(hsv.h)}°</span>
+        </div>
+        <div className="custom-slider-wrapper" style={{
+          background: 'linear-gradient(to right, #F09081 0px, #F09081 12px, #C9CA46 calc(12px + (100% - 24px) * 0.1666), #74CF6D calc(12px + (100% - 24px) * 0.3333), #2CC5C5 calc(12px + (100% - 24px) * 0.5), #87ADFA calc(12px + (100% - 24px) * 0.6666), #D792D4 calc(12px + (100% - 24px) * 0.8333), #F09081 calc(100% - 12px), #F09081 100%)'
+        }}>
+          <input type="range" min="0" max="360" step="1" value={hsv.h} onChange={(e) => handleH(parseFloat(e.target.value))} className="custom-slider" />
+        </div>
+      </div>
+
+      {/* S */}
+      <div className="space-y-2">
+        <div className="flex justify-between text-[11px] font-mono text-white/60">
+            <span>Saturation</span><span>{Math.round(hsv.s)}%</span>
+        </div>
+        <div className="custom-slider-wrapper" style={{
+          background: `linear-gradient(to right, ${sColor0} 0px, ${sColor0} 12px, ${sColor100} calc(100% - 12px), ${sColor100} 100%)`
+        }}>
+          <input type="range" min="0" max="100" step="1" value={hsv.s} onChange={(e) => handleS(parseFloat(e.target.value))} className="custom-slider" />
+        </div>
+      </div>
+
+      {/* V */}
+      <div className="space-y-2">
+        <div className="flex justify-between text-[11px] font-mono text-white/60">
+            <span>Value</span><span>{Math.round(hsv.v)}%</span>
+        </div>
+        <div className="custom-slider-wrapper" style={{
+          background: `linear-gradient(to right, ${vColor0} 0px, ${vColor0} 12px, ${vColor100} calc(100% - 12px), ${vColor100} 100%)`
+        }}>
+          <input type="range" min="0" max="100" step="1" value={hsv.v} onChange={(e) => handleV(parseFloat(e.target.value))} className="custom-slider" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function HalftoneMeshGradient() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
@@ -385,6 +514,19 @@ export default function HalftoneMeshGradient() {
   const [contrast, setContrast] = useState(1.15);
   const [gridNoise, setGridNoise] = useState(0.2);
   const[softness, setSoftness] = useState(0.0);
+
+  const [activeColorIdx, setActiveColorIdx] = useState<number | null>(null);
+  const colorsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (activeColorIdx !== null && colorsRef.current && !colorsRef.current.contains(e.target as Node)) {
+        setActiveColorIdx(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [activeColorIdx]);
 
   const fpsRef = useRef<HTMLSpanElement>(null);
   const timeInfoRef = useRef<HTMLParagraphElement>(null);
@@ -652,49 +794,83 @@ export default function HalftoneMeshGradient() {
           <div className="flex bg-white/5 p-1 rounded-lg mb-6">
             <button 
               className={`flex-1 text-[11px] uppercase tracking-wider py-2 rounded-md transition-all font-semibold ${mode === 'cmyk' ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
-              onClick={() => setMode('cmyk')}
+              onClick={() => { setMode('cmyk'); setActiveColorIdx(null); }}
             >
               CMYK
             </button>
             <button 
               className={`flex-1 text-[11px] uppercase tracking-wider py-2 rounded-md transition-all font-semibold ${mode === 'dots' ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
-              onClick={() => setMode('dots')}
+              onClick={() => { setMode('dots'); setActiveColorIdx(null); }}
             >
               Dots
             </button>
           </div>
 
-          {mode === 'cmyk' && (
-            <section>
+          <div className="relative mb-6" ref={colorsRef}>
+            {mode === 'cmyk' ? (
               <div className="grid grid-cols-4 gap-2">
                 {[
-                  { val: color1, set: setColor1 },
-                  { val: color2, set: setColor2 },
-                  { val: color3, set: setColor3 },
-                  { val: color4, set: setColor4 },
-                ].map((c, i) => (
-                  <label key={i} className="h-10 w-full rounded border border-white/10 flex flex-col cursor-pointer hover:scale-105 transition-transform shadow-lg shadow-white/5 overflow-hidden" style={{ backgroundColor: c.val }}>
-                    <input type="color" value={c.val} onChange={e => c.set(e.target.value)} className="w-[150%] h-[150%] -m-2 opacity-0 cursor-pointer" />
-                  </label>
+                  { c: color1, set: setColor1 },
+                  { c: color2, set: setColor2 },
+                  { c: color3, set: setColor3 },
+                  { c: color4, set: setColor4 },
+                ].map((item, i) => (
+                  <button
+                    key={i}
+                    className={`h-10 w-full rounded border flex flex-col cursor-pointer transition-all shadow-lg overflow-hidden ${
+                      activeColorIdx === i ? 'border-white/90 scale-105 z-10 shadow-white/20' : 'border-white/10 hover:scale-105 shadow-white/5 hover:border-white/30'
+                    }`}
+                    style={{ backgroundColor: item.c }}
+                    onClick={() => setActiveColorIdx(activeColorIdx === i ? null : i)}
+                  />
                 ))}
               </div>
-            </section>
-          )}
-
-          {mode === 'dots' && (
-            <section>
+            ) : (
               <div className="grid grid-cols-2 gap-2">
-                <label className="h-10 w-full flex-1 rounded border border-white/20 flex flex-col cursor-pointer overflow-hidden relative shadow-lg shadow-white/5 hover:scale-105 transition-transform" style={{ backgroundColor: dotColorFront }}>
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-[9px] uppercase font-bold" style={{ color: getTextColorForBg(dotColorFront) }}>Front</div>
-                  <input type="color" value={dotColorFront} onChange={e => setDotColorFront(e.target.value)} className="w-[150%] h-[150%] -m-2 opacity-0 cursor-pointer absolute" />
-                </label>
-                <label className="h-10 w-full flex-1 rounded border border-white/20 flex flex-col cursor-pointer overflow-hidden relative shadow-lg shadow-white/5 hover:scale-105 transition-transform" style={{ backgroundColor: dotColorBack }}>
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-[9px] uppercase font-bold" style={{ color: getTextColorForBg(dotColorBack) }}>Back</div>
-                  <input type="color" value={dotColorBack} onChange={e => setDotColorBack(e.target.value)} className="w-[150%] h-[150%] -m-2 opacity-0 cursor-pointer absolute" />
-                </label>
+                {[
+                  { c: dotColorFront, set: setDotColorFront, label: 'Front' },
+                  { c: dotColorBack, set: setDotColorBack, label: 'Back' },
+                ].map((item, i) => (
+                  <button
+                    key={i}
+                    className={`h-10 w-full flex-1 rounded border flex flex-col cursor-pointer transition-all shadow-lg overflow-hidden relative ${
+                      activeColorIdx === i ? 'border-white/90 scale-105 z-10 shadow-white/20' : 'border-white/20 hover:scale-105 shadow-white/5 hover:border-white/40'
+                    }`}
+                    style={{ backgroundColor: item.c }}
+                    onClick={() => setActiveColorIdx(activeColorIdx === i ? null : i)}
+                  >
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-[9px] uppercase font-bold" style={{ color: getTextColorForBg(item.c) }}>
+                      {item.label}
+                    </div>
+                  </button>
+                ))}
               </div>
-            </section>
-          )}
+            )}
+
+            {activeColorIdx !== null && (
+              <div className="absolute top-[52px] left-0 right-0 p-5 bg-[#1A1A1D] border border-white/10 rounded-xl shadow-[0_16px_48px_rgba(0,0,0,1)] z-50">
+                {mode === 'cmyk' ? (
+                  <HSVColorPicker 
+                     color={[color1, color2, color3, color4][activeColorIdx]}
+                     onChange={(c) => {
+                       if (activeColorIdx === 0) setColor1(c);
+                       else if (activeColorIdx === 1) setColor2(c);
+                       else if (activeColorIdx === 2) setColor3(c);
+                       else if (activeColorIdx === 3) setColor4(c);
+                     }}
+                  />
+                ) : (
+                  <HSVColorPicker 
+                     color={[dotColorFront, dotColorBack][activeColorIdx]}
+                     onChange={(c) => {
+                       if (activeColorIdx === 0) setDotColorFront(c);
+                       else if (activeColorIdx === 1) setDotColorBack(c);
+                     }}
+                  />
+                )}
+              </div>
+            )}
+          </div>
 
           <section>
             <h3 className="text-[10px] font-mono uppercase tracking-widest text-white/90 mb-4 flex items-center gap-2">
