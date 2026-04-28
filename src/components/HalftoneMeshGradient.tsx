@@ -728,7 +728,7 @@ export default function HalftoneMeshGradient() {
               <div className="space-y-4">
                 <div className="flex gap-4">
                   <div className="space-y-2 flex-1">
-                    <div className="text-[11px] font-mono text-white/60 mb-1">type</div>
+                    <div className="text-[11px] font-mono text-white/60 mb-1">Type</div>
                     <div className="flex bg-white/5 p-[2px] rounded-md">
                       <button 
                         className={`flex-1 text-[10px] uppercase tracking-wider py-1.5 rounded-sm transition-all ${dotType === 0 ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
@@ -745,7 +745,7 @@ export default function HalftoneMeshGradient() {
                     </div>
                   </div>
                   <div className="space-y-2 flex-1">
-                    <div className="text-[11px] font-mono text-white/60 mb-1">grid</div>
+                    <div className="text-[11px] font-mono text-white/60 mb-1">Grid</div>
                     <div className="flex bg-white/5 p-[2px] rounded-md">
                       <button 
                         className={`flex-1 text-[10px] uppercase tracking-wider py-1.5 rounded-sm transition-all ${dotGrid === 0 ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
