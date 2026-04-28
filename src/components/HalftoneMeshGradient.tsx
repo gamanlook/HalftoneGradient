@@ -627,7 +627,7 @@ export default function HalftoneMeshGradient() {
 
   return (
     <div className="w-full flex-1 bg-[#111113] text-[#E0E0E0] font-sans flex flex-col md:flex-row md:overflow-hidden">
-      <div className="w-full h-[50dvh] md:h-full md:flex-1 relative bg-[#000] overflow-hidden shrink-0 group sticky top-0 z-30 shadow-[0_0_20px_rgba(17,17,19,0.9)] md:shadow-none">
+      <div className="w-full aspect-square max-h-[60dvh] md:max-h-none md:aspect-auto md:h-full md:flex-1 relative bg-[#000] overflow-hidden shrink-0 group sticky top-0 z-30 shadow-[0_0_20px_rgba(17,17,19,0.9)] md:shadow-none">
         <canvas 
           ref={canvasRef} 
           className="absolute inset-0 block w-full h-full z-0"
@@ -731,13 +731,13 @@ export default function HalftoneMeshGradient() {
                     <div className="text-[11px] font-mono text-white/60 mb-1">type</div>
                     <div className="flex bg-white/5 p-[2px] rounded-md">
                       <button 
-                        className={`flex-1 text-[10px] uppercase tracking-wider py-1 rounded-sm transition-all ${dotType === 0 ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
+                        className={`flex-1 text-[10px] uppercase tracking-wider py-1.5 rounded-sm transition-all ${dotType === 0 ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
                         onClick={() => setDotType(0)}
                       >
                         Classic
                       </button>
                       <button 
-                        className={`flex-1 text-[10px] uppercase tracking-wider py-1 rounded-sm transition-all ${dotType === 1 ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
+                        className={`flex-1 text-[10px] uppercase tracking-wider py-1.5 rounded-sm transition-all ${dotType === 1 ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
                         onClick={() => setDotType(1)}
                       >
                         Gooey
@@ -748,13 +748,13 @@ export default function HalftoneMeshGradient() {
                     <div className="text-[11px] font-mono text-white/60 mb-1">grid</div>
                     <div className="flex bg-white/5 p-[2px] rounded-md">
                       <button 
-                        className={`flex-1 text-[10px] uppercase tracking-wider py-1 rounded-sm transition-all ${dotGrid === 0 ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
+                        className={`flex-1 text-[10px] uppercase tracking-wider py-1.5 rounded-sm transition-all ${dotGrid === 0 ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
                         onClick={() => setDotGrid(0)}
                       >
                         Square
                       </button>
                       <button 
-                        className={`flex-1 text-[10px] uppercase tracking-wider py-1 rounded-sm transition-all ${dotGrid === 1 ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
+                        className={`flex-1 text-[10px] uppercase tracking-wider py-1.5 rounded-sm transition-all ${dotGrid === 1 ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
                         onClick={() => setDotGrid(1)}
                       >
                         Hex
