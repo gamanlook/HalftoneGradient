@@ -4,7 +4,7 @@ function hexToRGB(hex: string) {
   const r = parseInt(hex.slice(1, 3), 16) / 255;
   const g = parseInt(hex.slice(3, 5), 16) / 255;
   const b = parseInt(hex.slice(5, 7), 16) / 255;
-  return [r, g, b];
+  return[r, g, b];
 }
 
 function getTextColorForBg(hex: string) {
@@ -241,7 +241,6 @@ void main() {
   vec2 pad = cellSizeY * vec2(1. / aspect, 1.);
   
   if (u_type == 1. && u_grid == 1.) {
-    // gooey diagonal grid works differently
     pad *= .7;
   }
 
@@ -331,32 +330,61 @@ function createProgram(gl: WebGL2RenderingContext, vsSource: string, fsSource: s
   return prog;
 }
 
+interface SliderControlProps {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  onChange: (val: number) => void;
+}
+
+function SliderControl({ label, value, min, max, step, onChange }: SliderControlProps) {
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-between text-[11px] font-mono text-white/60">
+        <span>{label}</span>
+        <span>{value.toFixed(2)}</span>
+      </div>
+      <div className="custom-slider-wrapper">
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={(e) => onChange(parseFloat(e.target.value))}
+          className="custom-slider"
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function HalftoneMeshGradient() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
-  //default colors and animation
-  const [mode, setMode] = useState<'cmyk' | 'dots'>('cmyk');
-  const [color1, setColor1] = useState('#6688d6');
+  const[mode, setMode] = useState<'cmyk' | 'dots'>('cmyk');
+  const[color1, setColor1] = useState('#6688d6');
   const [color2, setColor2] = useState('#1e1782');
   const [color3, setColor3] = useState('#291cd9');
   const [color4, setColor4] = useState('#22f73a');
   
-  // Dots specific
-  const [dotColorFront, setDotColorFront] = useState('#CDD6DC');
+  const[dotColorFront, setDotColorFront] = useState('#CDD6DC');
   const [dotColorBack, setDotColorBack] = useState('#000000');
   const [dotType, setDotType] = useState<number>(1);
-  const [dotGrid, setDotGrid] = useState<number>(0);
+  const[dotGrid, setDotGrid] = useState<number>(0);
   const [dotRadius, setDotRadius] = useState<number>(0.8);
   const [dotContrast, setDotContrast] = useState<number>(0.5);
 
-  const [animationSpeed, setAnimationSpeed] = useState(0.6);
+  const[animationSpeed, setAnimationSpeed] = useState(0.6);
   const [meshDistortion, setMeshDistortion] = useState(0.8);
   const [meshSwirl, setMeshSwirl] = useState(0.1);
   const [meshBlur, setMeshBlur] = useState(0.5);
-  const [dotSize, setDotSize] = useState(0.4);
+  const[dotSize, setDotSize] = useState(0.4);
   const [contrast, setContrast] = useState(1.15);
   const [gridNoise, setGridNoise] = useState(0.2);
-  const [softness, setSoftness] = useState(0.0);
+  const[softness, setSoftness] = useState(0.0);
 
   const fpsRef = useRef<HTMLSpanElement>(null);
   const timeInfoRef = useRef<HTMLParagraphElement>(null);
@@ -374,7 +402,7 @@ export default function HalftoneMeshGradient() {
       animationSpeed, meshDistortion, meshSwirl, meshBlur, dotSize, contrast, gridNoise, softness,
       mode, dotColorFront, dotColorBack, dotType, dotGrid, dotRadius, dotContrast
     };
-  }, [
+  },[
     color1, color2, color3, color4,
     animationSpeed, meshDistortion, meshSwirl, meshBlur, dotSize, contrast, gridNoise, softness,
     mode, dotColorFront, dotColorBack, dotType, dotGrid, dotRadius, dotContrast
@@ -384,10 +412,9 @@ export default function HalftoneMeshGradient() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
-    // Create WebGL2 context
     const gl = canvas.getContext('webgl2', { 
       antialias: false, 
-      preserveDrawingBuffer: true // Allows toDataURL() to capture the canvas after rendering
+      preserveDrawingBuffer: true
     });
     if (!gl) {
       console.error('WebGL 2 is not supported by your browser.');
@@ -399,7 +426,6 @@ export default function HalftoneMeshGradient() {
     const prog2Dots = createProgram(gl, VERTEX_SHADER, FSHADER_PASS2_DOTS);
     if (!prog1 || !prog2Cmyk || !prog2Dots) return;
 
-    // Fullscreen quad positions
     const positions = new Float32Array([
       -1, -1,
        1, -1,
@@ -415,7 +441,6 @@ export default function HalftoneMeshGradient() {
     gl.enableVertexAttribArray(0);
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
 
-    // FBO setup for Pass 1 -> Pass 2
     let fboParams = { width: 0, height: 0 };
     const texture = gl.createTexture();
     const fbo = gl.createFramebuffer();
@@ -441,7 +466,6 @@ export default function HalftoneMeshGradient() {
       }
     }
 
-    // Uniform locations for Pass 1
     const locTime = gl.getUniformLocation(prog1, 'u_time');
     const locColors = gl.getUniformLocation(prog1, 'u_colors');
     const locDistortion = gl.getUniformLocation(prog1, 'u_distortion');
@@ -449,7 +473,6 @@ export default function HalftoneMeshGradient() {
     const locMeshBlur = gl.getUniformLocation(prog1, 'u_meshBlur');
     const locRes1 = gl.getUniformLocation(prog1, 'u_resolution');
 
-    // Uniform locations for Pass 2 (CMYK)
     const locImageCmyk = gl.getUniformLocation(prog2Cmyk, 'u_image');
     const locSizeCmyk = gl.getUniformLocation(prog2Cmyk, 'u_size');
     const locContrastCmyk = gl.getUniformLocation(prog2Cmyk, 'u_contrast');
@@ -457,7 +480,6 @@ export default function HalftoneMeshGradient() {
     const locGridNoiseCmyk = gl.getUniformLocation(prog2Cmyk, 'u_gridNoise');
     const locSoftnessCmyk = gl.getUniformLocation(prog2Cmyk, 'u_softness');
 
-    // Uniform locations for Pass 2 (Dots)
     const locImageDots = gl.getUniformLocation(prog2Dots, 'u_image');
     const locRes2Dots = gl.getUniformLocation(prog2Dots, 'u_resolution');
     const locColorFrontDots = gl.getUniformLocation(prog2Dots, 'u_colorFront');
@@ -482,7 +504,6 @@ export default function HalftoneMeshGradient() {
       const dt = (now - lastTime) / 1000.0;
       lastTime = now;
 
-      // Update FPS counter every second
       frameCount++;
       if (now - lastFpsTime >= 1000) {
         const fps = (frameCount * 1000) / (now - lastFpsTime);
@@ -522,7 +543,6 @@ export default function HalftoneMeshGradient() {
 
       gl.viewport(0, 0, canvas.width, canvas.height);
 
-      // PASS 1: Render dynamically animated mesh gradient into FBO
       gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
       gl.useProgram(prog1);
       gl.bindVertexArray(vao);
@@ -537,9 +557,8 @@ export default function HalftoneMeshGradient() {
         rgb3 = hexToRGB(c.color3);
         rgb4 = hexToRGB(c.color4);
       } else {
-        // Expose a grayscale map to the Dot Shader for accurate brightness evaluation
-        rgb1 = [1.0, 1.0, 1.0];
-        rgb2 = [0.66, 0.66, 0.66];
+        rgb1 =[1.0, 1.0, 1.0];
+        rgb2 =[0.66, 0.66, 0.66];
         rgb3 = [0.33, 0.33, 0.33];
         rgb4 = [0.0, 0.0, 0.0];
       }
@@ -552,7 +571,6 @@ export default function HalftoneMeshGradient() {
 
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
-      // PASS 2: Pass generated texture through halftone filter onto default Framebuffer (canvas)
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
       
       gl.activeTexture(gl.TEXTURE0);
@@ -605,37 +623,26 @@ export default function HalftoneMeshGradient() {
       gl.deleteTexture(texture);
       gl.deleteFramebuffer(fbo);
     };
-  }, []);
+  },[]);
 
   return (
-    <div className="w-full h-full bg-[#0A0A0B] text-[#E0E0E0] font-sans flex flex-col md:flex-row overflow-hidden">
-      
-      {/* 
-        Shader Output Area 
-        On mobile: Takes top half. On desktop: takes available flex space
-      */}
-      <div className="w-full h-[50vh] md:h-full md:flex-1 relative bg-[#000] overflow-hidden shrink-0 group">
+    <div className="w-full flex-1 bg-[#111113] text-[#E0E0E0] font-sans flex flex-col md:flex-row md:overflow-hidden">
+      <div className="w-full h-[50dvh] md:h-full md:flex-1 relative bg-[#000] overflow-hidden shrink-0 group sticky top-0 z-30 shadow-[0_0_20px_rgba(17,17,19,0.9)] md:shadow-none">
         <canvas 
           ref={canvasRef} 
           className="absolute inset-0 block w-full h-full z-0"
         />
       </div>
 
-      {/* 
-        Control Panel 
-        On mobile: Takes bottom half and scrolls. On desktop: Fixed width and scrolls right edge
-      */}
-      <div className="w-full md:w-[340px] shrink-0 h-[50vh] md:h-full bg-[#111113] md:border-l border-t md:border-t-0 border-white/5 flex flex-col relative z-20">
+      <div className="w-full md:w-[340px] shrink-0 md:h-full bg-[#111113] md:border-l border-white/5 flex flex-col relative z-10">
         
-        {/* All content is scrollable now */}
-        <div className="flex-1 p-6 space-y-8 overflow-y-auto custom-scrollbar">
+        <div className="flex-1 p-6 pb-safe space-y-8 md:overflow-y-auto custom-scrollbar pb-12 md:pb-6">
           
           <header className="mb-6">
             <h1 className="text-3xl font-light text-white/90 leading-[1]">
               Halftone<br/>
               <span className="font-extrabold italic">Gradient</span>
             </h1>
-            <p ref={timeInfoRef} className="hidden text-[10px] font-mono text-white/30 mt-2 uppercase tracking-[0.2em]">u_time: 0.000</p>
             <div className="mt-2 flex gap-4 text-[10px] font-mono text-white/40">
               <span ref={fpsRef}>60.0 FPS</span>
               <span ref={resolutionInfoRef}>W:0 H:0</span>
@@ -694,22 +701,10 @@ export default function HalftoneMeshGradient() {
               <span className={`w-1 h-3 ${mode === 'cmyk' ? 'bg-[#35D926]' : 'bg-[#CDD6DC]'}`}></span> Mesh Properties
             </h3>
             <div className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex justify-between text-[11px] font-mono text-white/60"><span>distortion</span><span>{meshDistortion.toFixed(2)}</span></div>
-                <input type="range" min="0" max="2" step="0.01" value={meshDistortion} onChange={e => setMeshDistortion(parseFloat(e.target.value))} className="w-full accent-[#22f73a] opacity-80 h-1 bg-white/10 rounded-lg appearance-none" />
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-[11px] font-mono text-white/60"><span>swirl</span><span>{meshSwirl.toFixed(2)}</span></div>
-                <input type="range" min="0" max="1" step="0.01" value={meshSwirl} onChange={e => setMeshSwirl(parseFloat(e.target.value))} className="w-full accent-[#22f73a] opacity-80 h-1 bg-white/10 rounded-lg appearance-none" />
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-[11px] font-mono text-white/60"><span>meshBlur</span><span>{meshBlur.toFixed(2)}</span></div>
-                <input type="range" min="0" max="1" step="0.01" value={meshBlur} onChange={e => setMeshBlur(parseFloat(e.target.value))} className="w-full accent-[#22f73a] opacity-80 h-1 bg-white/10 rounded-lg appearance-none" />
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-[11px] font-mono text-white/60"><span>animation_speed</span><span>{animationSpeed.toFixed(2)}</span></div>
-                <input type="range" min="0" max="3" step="0.01" value={animationSpeed} onChange={e => setAnimationSpeed(parseFloat(e.target.value))} className="w-full accent-white/50 h-1 bg-white/10 rounded-lg appearance-none" />
-              </div>
+              <SliderControl label="Distortion" value={meshDistortion} min={0} max={2} step={0.01} onChange={setMeshDistortion} />
+              <SliderControl label="Swirl" value={meshSwirl} min={0} max={1} step={0.01} onChange={setMeshSwirl} />
+              <SliderControl label="Mesh Blur" value={meshBlur} min={0} max={1} step={0.01} onChange={setMeshBlur} />
+              <SliderControl label="Animation Speed" value={animationSpeed} min={0} max={3} step={0.01} onChange={setAnimationSpeed} />
             </div>
           </section>
           
@@ -719,22 +714,10 @@ export default function HalftoneMeshGradient() {
                 <span className="w-1 h-3 bg-[#10CCE0]"></span> CMYK Engine
               </h3>
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-[11px] font-mono text-white/60"><span>dotSize</span><span>{dotSize.toFixed(2)}</span></div>
-                  <input type="range" min="0.01" max="1" step="0.01" value={dotSize} onChange={e => setDotSize(parseFloat(e.target.value))} className="w-full accent-cyan-400 h-1 bg-white/10 rounded-lg appearance-none" />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-[11px] font-mono text-white/60"><span>contrast</span><span>{contrast.toFixed(2)}</span></div>
-                  <input type="range" min="0" max="2" step="0.01" value={contrast} onChange={e => setContrast(parseFloat(e.target.value))} className="w-full accent-yellow-400 h-1 bg-white/10 rounded-lg appearance-none" />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-[11px] font-mono text-white/60"><span>gridNoise</span><span>{gridNoise.toFixed(2)}</span></div>
-                  <input type="range" min="0" max="1" step="0.01" value={gridNoise} onChange={e => setGridNoise(parseFloat(e.target.value))} className="w-full accent-purple-400 h-1 bg-white/10 rounded-lg appearance-none" />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-[11px] font-mono text-white/60"><span>softness</span><span>{softness.toFixed(2)}</span></div>
-                  <input type="range" min="0" max="1" step="0.01" value={softness} onChange={e => setSoftness(parseFloat(e.target.value))} className="w-full accent-pink-400 h-1 bg-white/10 rounded-lg appearance-none" />
-                </div>
+                <SliderControl label="Dot Size" value={dotSize} min={0.01} max={1} step={0.01} onChange={setDotSize} />
+                <SliderControl label="Contrast" value={contrast} min={0} max={2} step={0.01} onChange={setContrast} />
+                <SliderControl label="Grid Noise" value={gridNoise} min={0} max={1} step={0.01} onChange={setGridNoise} />
+                <SliderControl label="Softness" value={softness} min={0} max={1} step={0.01} onChange={setSoftness} />
               </div>
             </section>
           ) : (
@@ -780,18 +763,9 @@ export default function HalftoneMeshGradient() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <div className="flex justify-between text-[11px] font-mono text-white/60"><span>dotSize</span><span>{dotSize.toFixed(2)}</span></div>
-                  <input type="range" min="0.01" max="1" step="0.01" value={dotSize} onChange={e => setDotSize(parseFloat(e.target.value))} className="w-full accent-cyan-400 h-1 bg-white/10 rounded-lg appearance-none" />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-[11px] font-mono text-white/60"><span>radius</span><span>{dotRadius.toFixed(2)}</span></div>
-                  <input type="range" min="0" max="2" step="0.01" value={dotRadius} onChange={e => setDotRadius(parseFloat(e.target.value))} className="w-full accent-purple-400 h-1 bg-white/10 rounded-lg appearance-none" />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-[11px] font-mono text-white/60"><span>contrast</span><span>{dotContrast.toFixed(2)}</span></div>
-                  <input type="range" min="0" max="1" step="0.01" value={dotContrast} onChange={e => setDotContrast(parseFloat(e.target.value))} className="w-full accent-pink-400 h-1 bg-white/10 rounded-lg appearance-none" />
-                </div>
+                <SliderControl label="Dot Size" value={dotSize} min={0.01} max={1} step={0.01} onChange={setDotSize} />
+                <SliderControl label="Radius" value={dotRadius} min={0} max={2} step={0.01} onChange={setDotRadius} />
+                <SliderControl label="Contrast" value={dotContrast} min={0} max={1} step={0.01} onChange={setDotContrast} />
               </div>
             </section>
           )}
@@ -814,25 +788,9 @@ export default function HalftoneMeshGradient() {
                 Shaders by Paper
               </a>
             </div>
-            {/* Required Notice: Copyright Lost Coast Labs, Inc. */}
           </section>
         </div>
       </div>
-      
-      <style dangerouslySetInnerHTML={{__html: `
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
-        input[type='range']::-webkit-slider-thumb {
-          -webkit-appearance: none;
-          appearance: none;
-          width: 12px;
-          height: 12px;
-          background: white;
-          border-radius: 50%;
-          cursor: pointer;
-        }
-      `}} />
     </div>
   );
 }

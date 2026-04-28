@@ -7,7 +7,7 @@ import HalftoneMeshGradient from './components/HalftoneMeshGradient';
 
 export default function App() {
   return (
-    <div className="w-screen h-screen">
+    <div className="w-full min-h-[100dvh] md:h-screen md:w-screen flex flex-col">
       <HalftoneMeshGradient />
     </div>
   );
