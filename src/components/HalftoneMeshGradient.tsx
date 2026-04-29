@@ -30,6 +30,7 @@ uniform vec3 u_colors[4];
 uniform float u_distortion;
 uniform float u_swirl;
 uniform float u_meshBlur;
+uniform float u_mixing;
 uniform vec2 u_resolution;
 
 uniform float u_baseType;
@@ -98,7 +99,7 @@ void main() {
           pos = (pos - 0.5) * aspectVec + 0.5;
           
           float d = length(uvRotated - pos);
-          float radiusSq = mix(0.01, 0.15, u_meshBlur); 
+          float radiusSq = mix(0.01, 0.25, u_meshBlur); 
           float e = radiusSq / (d * d + 1e-4);
           
           tVal += e;
@@ -111,7 +112,7 @@ void main() {
       }
       
       float edge = 1.0;
-      float borderSoftness = 0.05 + mix(0.0, 0.5, u_meshBlur);
+      float borderSoftness = mix(0.01, 1.5, u_mixing);
       float alpha = smoothstep(edge - borderSoftness, edge + borderSoftness, tVal);
       
       fragColor = vec4(mix(bgColor, mColor, alpha), 1.0);
@@ -561,7 +562,7 @@ function ToggleButtonGroup({
 }) {
   return (
     <div className={`space-y-2 flex-1 transition-opacity duration-300 ${disabled ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
-      <div className="text-[11px] font-mono text-white/60 mb-1">{label}</div>
+      <div className="text-[11px] font-mono text-white/60">{label}</div>
       <div className="flex bg-white/10 p-0 rounded-full h-8">
         {options.map((opt, i) => (
           <button 
@@ -597,6 +598,7 @@ export default function HalftoneMeshGradient() {
   const [meshDistortion, setMeshDistortion] = useState(0.8);
   const [meshSwirl, setMeshSwirl] = useState(0.1);
   const [meshBlur, setMeshBlur] = useState(0.5);
+  const [mixing, setMixing] = useState(0.5);
   const[dotSize, setDotSize] = useState(0.4);
   const [contrast, setContrast] = useState(1.15);
   const [gridNoise, setGridNoise] = useState(0.2);
@@ -647,7 +649,7 @@ export default function HalftoneMeshGradient() {
 
   const controlsRef = useRef({
     color1, color2, color3, color4,
-    animationSpeed, meshDistortion, meshSwirl, meshBlur, dotSize, contrast, gridNoise, softness,
+    animationSpeed, meshDistortion, meshSwirl, meshBlur, mixing, dotSize, contrast, gridNoise, softness,
     mode, dotColorFront, dotColorBack, dotType, dotGrid, dotRadius, dotContrast,
     baseType, metaballsCount
   });
@@ -655,13 +657,13 @@ export default function HalftoneMeshGradient() {
   useEffect(() => {
     controlsRef.current = {
       color1, color2, color3, color4,
-      animationSpeed, meshDistortion, meshSwirl, meshBlur, dotSize, contrast, gridNoise, softness,
+      animationSpeed, meshDistortion, meshSwirl, meshBlur, mixing, dotSize, contrast, gridNoise, softness,
       mode, dotColorFront, dotColorBack, dotType, dotGrid, dotRadius, dotContrast,
       baseType, metaballsCount
     };
   },[
     color1, color2, color3, color4,
-    animationSpeed, meshDistortion, meshSwirl, meshBlur, dotSize, contrast, gridNoise, softness,
+    animationSpeed, meshDistortion, meshSwirl, meshBlur, mixing, dotSize, contrast, gridNoise, softness,
     mode, dotColorFront, dotColorBack, dotType, dotGrid, dotRadius, dotContrast,
     baseType, metaballsCount
   ]);
@@ -729,6 +731,7 @@ export default function HalftoneMeshGradient() {
     const locDistortion = gl.getUniformLocation(prog1, 'u_distortion');
     const locSwirl = gl.getUniformLocation(prog1, 'u_swirl');
     const locMeshBlur = gl.getUniformLocation(prog1, 'u_meshBlur');
+    const locMixing = gl.getUniformLocation(prog1, 'u_mixing');
     const locRes1 = gl.getUniformLocation(prog1, 'u_resolution');
     const locBaseType = gl.getUniformLocation(prog1, 'u_baseType');
     const locMetaballsCount = gl.getUniformLocation(prog1, 'u_metaballsCount');
@@ -834,9 +837,10 @@ export default function HalftoneMeshGradient() {
       
       gl.uniform3fv(locColors, new Float32Array([...rgb1, ...rgb2, ...rgb3, ...rgb4]));
       
-      gl.uniform1f(locDistortion, c.meshDistortion);
-      gl.uniform1f(locSwirl, c.meshSwirl);
+      gl.uniform1f(locDistortion, c.baseType === 1 ? 0 : c.meshDistortion);
+      gl.uniform1f(locSwirl, c.baseType === 1 ? 0 : c.meshSwirl);
       gl.uniform1f(locMeshBlur, c.meshBlur);
+      if (locMixing) gl.uniform1f(locMixing, c.mixing);
       if (locBaseType) gl.uniform1f(locBaseType, c.baseType);
       if (locMetaballsCount) gl.uniform1f(locMetaballsCount, c.metaballsCount);
 
@@ -1017,16 +1021,16 @@ export default function HalftoneMeshGradient() {
               <span className={`w-1 h-3 ${mode === 'cmyk' ? 'bg-[#35D926]' : 'bg-[#CDD6DC]'}`}></span> Properties
             </h3>
             <div className="space-y-4">
-              <div className="flex gap-4">
-                <ToggleButtonGroup
-                  label="Type"
-                  value={baseType}
-                  onChange={setBaseType}
-                  options={[
-                    { label: 'Aurora', value: 0 },
-                    { label: 'Blobs', value: 1 }
-                  ]}
-                />
+              <ToggleButtonGroup
+                label="Type"
+                value={baseType}
+                onChange={setBaseType}
+                options={[
+                  { label: 'Aurora', value: 0 },
+                  { label: 'Blobs', value: 1 }
+                ]}
+              />
+              {baseType === 1 && (
                 <ToggleButtonGroup
                   label="Blob Count"
                   value={metaballsCount}
@@ -1036,11 +1040,17 @@ export default function HalftoneMeshGradient() {
                     { label: 2, value: 2 },
                     { label: 3, value: 3 }
                   ]}
-                  disabled={baseType === 0}
                 />
-              </div>
-              <SliderControl label="Distortion" value={meshDistortion} min={0} max={2} step={0.01} onChange={setMeshDistortion} />
-              <SliderControl label="Swirl" value={meshSwirl} min={0} max={1} step={0.01} onChange={setMeshSwirl} />
+              )}
+              {baseType === 0 && (
+                <>
+                  <SliderControl label="Distortion" value={meshDistortion} min={0} max={2} step={0.01} onChange={setMeshDistortion} />
+                  <SliderControl label="Swirl" value={meshSwirl} min={0} max={1} step={0.01} onChange={setMeshSwirl} />
+                </>
+              )}
+              {baseType === 1 && (
+                <SliderControl label="Mixing" value={mixing} min={0} max={1} step={0.01} onChange={setMixing} />
+              )}
               <SliderControl label="Spread" value={meshBlur} min={0} max={1} step={0.01} onChange={setMeshBlur} />
               <SliderControl label="Animation Speed" value={animationSpeed} min={0} max={3} step={0.01} onChange={setAnimationSpeed} />
             </div>
