@@ -989,7 +989,7 @@ export default function HalftoneMeshGradient() {
           )}
 
           <section className="pt-8 border-t border-white/5 space-y-4">
-            <button className="w-full bg-white text-black py-3 rounded-full text-xs font-semibold uppercase tracking-[0.1em] hover:bg-white/90 transition-colors" onClick={() => {
+            <button className="w-full h-12 bg-white text-black rounded-full text-xs font-semibold uppercase tracking-[0.1em] hover:bg-white/90 transition-colors" onClick={() => {
               if (canvasRef.current) {
                 const link = document.createElement('a');
                 link.download = 'halftone-mesh-gradient.png';
@@ -997,12 +997,12 @@ export default function HalftoneMeshGradient() {
                 link.click();
               }
             }}>Export Asset</button>
-            <div className="flex justify-center items-center gap-3 text-[10px] text-white/30 font-sans mt-2">
-              <a href="https://github.com/gamanlook/HalftoneGradient" target="_blank" rel="noopener noreferrer" className="hover:text-white/60 transition-colors decoration-white/20 underline-offset-4 hover:underline">
+            <div className="flex justify-center items-center gap-3 text-[10px] text-white/50 font-sans mt-2">
+              <a href="https://github.com/gamanlook/HalftoneGradient" target="_blank" rel="noopener noreferrer" className="hover:text-white/80 transition-colors decoration-white/20 underline-offset-4 hover:underline">
                 View on GitHub
               </a>
               <span>•</span>
-              <a href="https://shaders.paper.design" target="_blank" rel="noopener noreferrer" className="hover:text-white/60 transition-colors decoration-white/20 underline-offset-4 hover:underline">
+              <a href="https://shaders.paper.design" target="_blank" rel="noopener noreferrer" className="hover:text-white/80 transition-colors decoration-white/20 underline-offset-4 hover:underline">
                 Shaders by Paper
               </a>
             </div>
