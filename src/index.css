@@ -39,7 +39,7 @@ body {
   opacity: 0; /* 讓本體不可見但能被點擊 */
 
   cursor: pointer;
-  pointer-events: auto;
+  pointer-events: none; /* 禁止點擊軌道，避免手機版滑動時誤觸 */
 }
 
 /* 透明的 32px hit thumb */
@@ -49,6 +49,7 @@ body {
   width: var(--slider-height);
   height: var(--slider-height);
   border: 0;
+  pointer-events: auto; /* 只有圓球可以被互動拖曳 */
 }
 
 .custom-slider-native::-webkit-slider-runnable-track {
@@ -60,6 +61,7 @@ body {
   width: var(--slider-height);
   height: var(--slider-height);
   border: 0;
+  pointer-events: auto; /* 只有圓球可以被互動拖曳 */
 }
 
 .custom-slider-native::-moz-range-track {
