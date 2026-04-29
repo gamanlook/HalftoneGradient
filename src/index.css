@@ -12,69 +12,111 @@ body {
 
 /* 摒棄 @apply，改用純 CSS 寫法管理自訂元件，符合最佳實踐 */
 .custom-slider-wrapper {
+  --slider-height: 32px; /* 設定滑桿高度變數 */
+  --slider-half: calc(var(--slider-height) / 2); /* 讓漸層背景自動計算不偏移 */
+  --visual-thumb-size: 16px;
+
+  position: relative;
   display: flex;
   align-items: center;
   width: 100%;
-  height: 24px; /* 滑桿高度 */
+  height: var(--slider-height);
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 9999px;
-  /* 關鍵！左右 padding，配合 flex 置中，圓球上下左右都會完美保持等距離 */
-  padding: 0 4px; 
 }
 
-.custom-slider {
+/* 原生 input：負責互動，但完全透明 */
+.custom-slider-native {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  background-color: transparent;
+  margin: 0;
+
   appearance: none;
   -webkit-appearance: none;
-  outline: none;
-  pointer-events: none; /* 讓軌道本體不阻擋點擊 */
-}
+  background: transparent;
+  opacity: 0; /* 讓本體不可見但能被點擊 */
 
-/* --- Webkit (Chrome, Safari, Edge) 圓球設定 --- */
-.custom-slider::-webkit-slider-thumb {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 16px;  /* 圓球直徑*/
-  height: 16px; /* 圓球直徑*/
-  border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.6);
   cursor: pointer;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
-  pointer-events: auto; /* 讓圓球可以被拖曳 */
-  transition: background-color 0.15s, transform 0.15s;
-}
-
-.custom-slider::-webkit-slider-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.9);
-}
-
-.custom-slider::-webkit-slider-thumb:active {
-  background-color: #ffffff;
-  transform: scale(0.9); /* 點擊時微縮放的互動感 */
-}
-
-/* --- Firefox 圓球設定 --- */
-.custom-slider::-moz-range-thumb {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.6);
-  cursor: pointer;
-  border: none;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   pointer-events: auto;
-  transition: background-color 0.15s, transform 0.15s;
 }
 
-.custom-slider::-moz-range-thumb:hover {
+/* 透明的 32px hit thumb */
+.custom-slider-native::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: var(--slider-height);
+  height: var(--slider-height);
+  border: 0;
+}
+
+.custom-slider-native::-webkit-slider-runnable-track {
+  height: var(--slider-height);
+  background: transparent;
+}
+
+.custom-slider-native::-moz-range-thumb {
+  width: var(--slider-height);
+  height: var(--slider-height);
+  border: 0;
+}
+
+.custom-slider-native::-moz-range-track {
+  height: var(--slider-height);
+  background: transparent;
+  border: 0;
+}
+
+/*
+  32px slot：負責對齊 hit area。
+  --percent = 0% 時，slot 在最左邊。
+  --percent = 100% 時，slot 在最右邊。
+*/
+.custom-slider-thumb-slot {
+  position: absolute;
+  top: 50%;
+  left: var(--percent);
+
+  width: var(--slider-height);
+  height: var(--slider-height);
+
+  transform: translate(calc(-1 * var(--percent)), -50%);
+  display: grid;
+  place-items: center;
+
+  pointer-events: none;
+}
+
+/* 真正看得到的 16px 圓球 */
+.custom-slider-thumb-visual {
+  width: var(--visual-thumb-size);
+  height: var(--visual-thumb-size);
+  border-radius: 9999px;
+
+  background-color: rgba(255, 255, 255, 0.6);
+
+  /* 重點：box-shadow 現在是加在 16px 視覺圓球上，不會被透明 border 阻擋 */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+
+  transition:
+    background-color 0.15s,
+    transform 0.15s;
+}
+
+/* 互動狀態 styling 在視覺圓形上 */
+.custom-slider-native:hover + .custom-slider-thumb-slot .custom-slider-thumb-visual {
   background-color: rgba(255, 255, 255, 0.9);
 }
 
-.custom-slider::-moz-range-thumb:active {
+.custom-slider-native:active + .custom-slider-thumb-slot .custom-slider-thumb-visual {
   background-color: #ffffff;
   transform: scale(0.9);
+}
+
+.custom-slider-native:focus-visible + .custom-slider-thumb-slot .custom-slider-thumb-visual {
+  outline: 2px solid rgba(255, 255, 255, 0.45);
+  outline-offset: 3px;
 }
 
 /* 把原本寫在 React 裡的 Scrollbar 樣式也移到這裡統一管理 */

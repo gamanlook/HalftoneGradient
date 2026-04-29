@@ -340,13 +340,14 @@ interface SliderControlProps {
 }
 
 function SliderControl({ label, value, min, max, step, onChange }: SliderControlProps) {
+  const percent = ((value - min) / (max - min)) * 100;
   return (
     <div className="space-y-2">
       <div className="flex justify-between text-[11px] font-mono text-white/60">
         <span>{label}</span>
         <span>{value.toFixed(2)}</span>
       </div>
-      <div className="custom-slider-wrapper">
+      <div className="custom-slider-wrapper" style={{ "--percent": `${percent}%` } as React.CSSProperties}>
         <input
           type="range"
           min={min}
@@ -354,8 +355,11 @@ function SliderControl({ label, value, min, max, step, onChange }: SliderControl
           step={step}
           value={value}
           onChange={(e) => onChange(parseFloat(e.target.value))}
-          className="custom-slider"
+          className="custom-slider-native"
         />
+        <span className="custom-slider-thumb-slot" aria-hidden="true">
+          <span className="custom-slider-thumb-visual" />
+        </span>
       </div>
     </div>
   );
@@ -444,6 +448,9 @@ function HSVColorPicker({ color, onChange }: { color: string, onChange: (c: stri
     onChange(hsvToHex(newHsv.h, newHsv.s, newHsv.v));
   };
 
+  const offset = 'var(--slider-half)';
+  const size = 'var(--slider-height)';
+
   const sColor0 = hsvToHex(hsv.h, 0, hsv.v);
   const sColor100 = hsvToHex(hsv.h, 100, hsv.v);
   const vColor0 = '#000000';
@@ -457,9 +464,13 @@ function HSVColorPicker({ color, onChange }: { color: string, onChange: (c: stri
             <span>Hue</span><span>{Math.round(hsv.h)}°</span>
         </div>
         <div className="custom-slider-wrapper" style={{
-          background: 'linear-gradient(to right, #F09081 0px, #F09081 12px, #C9CA46 calc(12px + (100% - 24px) * 0.1666), #74CF6D calc(12px + (100% - 24px) * 0.3333), #2CC5C5 calc(12px + (100% - 24px) * 0.5), #87ADFA calc(12px + (100% - 24px) * 0.6666), #D792D4 calc(12px + (100% - 24px) * 0.8333), #F09081 calc(100% - 12px), #F09081 100%)'
-        }}>
-          <input type="range" min="0" max="360" step="1" value={hsv.h} onChange={(e) => handleH(parseFloat(e.target.value))} className="custom-slider" />
+          background: `linear-gradient(to right, #F09081 0px, #F09081 ${offset}, #C9CA46 calc(${offset} + (100% - ${size}) * 0.1666), #74CF6D calc(${offset} + (100% - ${size}) * 0.3333), #2CC5C5 calc(${offset} + (100% - ${size}) * 0.5), #87ADFA calc(${offset} + (100% - ${size}) * 0.6666), #D792D4 calc(${offset} + (100% - ${size}) * 0.8333), #F09081 calc(100% - ${offset}), #F09081 100%)`,
+          '--percent': `${(hsv.h / 360) * 100}%`
+        } as React.CSSProperties}>
+          <input type="range" min="0" max="360" step="1" value={hsv.h} onChange={(e) => handleH(parseFloat(e.target.value))} className="custom-slider-native" />
+          <span className="custom-slider-thumb-slot" aria-hidden="true">
+            <span className="custom-slider-thumb-visual" />
+          </span>
         </div>
       </div>
 
@@ -469,9 +480,13 @@ function HSVColorPicker({ color, onChange }: { color: string, onChange: (c: stri
             <span>Saturation</span><span>{Math.round(hsv.s)}%</span>
         </div>
         <div className="custom-slider-wrapper" style={{
-          background: `linear-gradient(to right, ${sColor0} 0px, ${sColor0} 12px, ${sColor100} calc(100% - 12px), ${sColor100} 100%)`
-        }}>
-          <input type="range" min="0" max="100" step="1" value={hsv.s} onChange={(e) => handleS(parseFloat(e.target.value))} className="custom-slider" />
+          background: `linear-gradient(to right, ${sColor0} 0px, ${sColor0} ${offset}, ${sColor100} calc(100% - ${offset}), ${sColor100} 100%)`,
+          '--percent': `${hsv.s}%`
+        } as React.CSSProperties}>
+          <input type="range" min="0" max="100" step="1" value={hsv.s} onChange={(e) => handleS(parseFloat(e.target.value))} className="custom-slider-native" />
+          <span className="custom-slider-thumb-slot" aria-hidden="true">
+            <span className="custom-slider-thumb-visual" />
+          </span>
         </div>
       </div>
 
@@ -481,9 +496,13 @@ function HSVColorPicker({ color, onChange }: { color: string, onChange: (c: stri
             <span>Value</span><span>{Math.round(hsv.v)}%</span>
         </div>
         <div className="custom-slider-wrapper" style={{
-          background: `linear-gradient(to right, ${vColor0} 0px, ${vColor0} 12px, ${vColor100} calc(100% - 12px), ${vColor100} 100%)`
-        }}>
-          <input type="range" min="0" max="100" step="1" value={hsv.v} onChange={(e) => handleV(parseFloat(e.target.value))} className="custom-slider" />
+          background: `linear-gradient(to right, ${vColor0} 0px, ${vColor0} ${offset}, ${vColor100} calc(100% - ${offset}), ${vColor100} 100%)`,
+          '--percent': `${hsv.v}%`
+        } as React.CSSProperties}>
+          <input type="range" min="0" max="100" step="1" value={hsv.v} onChange={(e) => handleV(parseFloat(e.target.value))} className="custom-slider-native" />
+          <span className="custom-slider-thumb-slot" aria-hidden="true">
+            <span className="custom-slider-thumb-visual" />
+          </span>
         </div>
       </div>
     </div>
@@ -791,15 +810,15 @@ export default function HalftoneMeshGradient() {
             </div>
           </header>
 
-          <div className="flex bg-white/5 p-1 rounded-lg mb-6">
+          <div className="flex bg-white/10 p-0 rounded-full mb-6">
             <button 
-              className={`flex-1 text-[11px] uppercase tracking-wider py-2 rounded-md transition-all font-semibold ${mode === 'cmyk' ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
+              className={`flex-1 flex items-center justify-center h-9 text-[11px] uppercase tracking-wider rounded-full transition-all font-semibold ${mode === 'cmyk' ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
               onClick={() => { setMode('cmyk'); setActiveColorIdx(null); }}
             >
               CMYK
             </button>
             <button 
-              className={`flex-1 text-[11px] uppercase tracking-wider py-2 rounded-md transition-all font-semibold ${mode === 'dots' ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
+              className={`flex-1 flex items-center justify-center h-9 text-[11px] uppercase tracking-wider rounded-full transition-all font-semibold ${mode === 'dots' ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
               onClick={() => { setMode('dots'); setActiveColorIdx(null); }}
             >
               Dots
@@ -818,7 +837,7 @@ export default function HalftoneMeshGradient() {
                   <button
                     key={i}
                     className={`h-10 w-full rounded border flex flex-col cursor-pointer transition-all shadow-lg overflow-hidden ${
-                      activeColorIdx === i ? 'border-white/90 scale-105 z-10 shadow-white/20' : 'border-white/10 hover:scale-105 shadow-white/5 hover:border-white/30'
+                      activeColorIdx === i ? 'border-white/90 scale-105 z-10 shadow-white/20' : 'border-white/20 hover:scale-105 hover:border-white/40'
                     }`}
                     style={{ backgroundColor: item.c }}
                     onClick={() => setActiveColorIdx(activeColorIdx === i ? null : i)}
@@ -834,7 +853,7 @@ export default function HalftoneMeshGradient() {
                   <button
                     key={i}
                     className={`h-10 w-full flex-1 rounded border flex flex-col cursor-pointer transition-all shadow-lg overflow-hidden relative ${
-                      activeColorIdx === i ? 'border-white/90 scale-105 z-10 shadow-white/20' : 'border-white/20 hover:scale-105 shadow-white/5 hover:border-white/40'
+                      activeColorIdx === i ? 'border-white/90 scale-105 z-10 shadow-white/20' : 'border-white/20 hover:scale-105 hover:border-white/40'
                     }`}
                     style={{ backgroundColor: item.c }}
                     onClick={() => setActiveColorIdx(activeColorIdx === i ? null : i)}
@@ -905,15 +924,15 @@ export default function HalftoneMeshGradient() {
                 <div className="flex gap-4">
                   <div className="space-y-2 flex-1">
                     <div className="text-[11px] font-mono text-white/60 mb-1">Type</div>
-                    <div className="flex bg-white/5 p-[2px] rounded-md">
+                    <div className="flex bg-white/10 p-0 rounded-full h-8">
                       <button 
-                        className={`flex-1 text-[10px] uppercase tracking-wider py-1.5 rounded-sm transition-all ${dotType === 0 ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
+                        className={`flex-1 flex items-center justify-center h-full text-[10px] uppercase tracking-wider rounded-full transition-all ${dotType === 0 ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
                         onClick={() => setDotType(0)}
                       >
                         Classic
                       </button>
                       <button 
-                        className={`flex-1 text-[10px] uppercase tracking-wider py-1.5 rounded-sm transition-all ${dotType === 1 ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
+                        className={`flex-1 flex items-center justify-center h-full text-[10px] uppercase tracking-wider rounded-full transition-all ${dotType === 1 ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
                         onClick={() => setDotType(1)}
                       >
                         Gooey
@@ -922,15 +941,15 @@ export default function HalftoneMeshGradient() {
                   </div>
                   <div className="space-y-2 flex-1">
                     <div className="text-[11px] font-mono text-white/60 mb-1">Grid</div>
-                    <div className="flex bg-white/5 p-[2px] rounded-md">
+                    <div className="flex bg-white/10 p-0 rounded-full h-8">
                       <button 
-                        className={`flex-1 text-[10px] uppercase tracking-wider py-1.5 rounded-sm transition-all ${dotGrid === 0 ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
+                        className={`flex-1 flex items-center justify-center h-full text-[10px] uppercase tracking-wider rounded-full transition-all ${dotGrid === 0 ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
                         onClick={() => setDotGrid(0)}
                       >
                         Square
                       </button>
                       <button 
-                        className={`flex-1 text-[10px] uppercase tracking-wider py-1.5 rounded-sm transition-all ${dotGrid === 1 ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
+                        className={`flex-1 flex items-center justify-center h-full text-[10px] uppercase tracking-wider rounded-full transition-all ${dotGrid === 1 ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
                         onClick={() => setDotGrid(1)}
                       >
                         Hex
@@ -946,8 +965,8 @@ export default function HalftoneMeshGradient() {
             </section>
           )}
 
-          <section className="pt-4 border-t border-white/5 space-y-4">
-            <button className="w-full bg-white text-black py-3 rounded-lg text-xs font-bold uppercase tracking-[0.2em] hover:bg-white/90 transition-colors" onClick={() => {
+          <section className="pt-8 border-t border-white/5 space-y-4">
+            <button className="w-full bg-white text-black py-3 rounded-full text-xs font-semibold uppercase tracking-[0.1em] hover:bg-white/90 transition-colors" onClick={() => {
               if (canvasRef.current) {
                 const link = document.createElement('a');
                 link.download = 'halftone-mesh-gradient.png';
