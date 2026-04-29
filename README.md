@@ -30,7 +30,7 @@ Paper Shaders 提供了許多令人驚豔的WebGL特效，但裡面沒有「動�
   - Blobs(泡泡)：融球 (Metaballs)，把多個 SDF 的數值用非線性的方式「加總」，超過某個閾值就填色，造就液體沾黏感
   - Blobs能做出類似ChatGPT生圖時的loading動畫，如下
 <br>
-<img width="600" height="360" alt="halftone-gradient ChatGPT-like Loading Style" src="https://github.com/user-attachments/assets/03add8e3-9de7-45fc-850b-f0cbf0157d8a" />
+<img width="600" height="360" alt="halftone-gradient ChatGPT-like Loading Style" src="https://github.com/user-attachments/assets/36edd7d9-e102-485e-91ac-323b3e767a04" />
 <br>
 <br>
 
