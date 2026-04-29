@@ -547,6 +547,29 @@ export default function HalftoneMeshGradient() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [activeColorIdx]);
 
+  useEffect(() => {
+    if (activeColorIdx === null || !colorsRef.current) return;
+
+    // A small timeout to let the popup render before measuring
+    const timer = setTimeout(() => {
+      if (!colorsRef.current) return;
+      const el = colorsRef.current;
+      const isDesktop = window.matchMedia('(min-width: 768px)').matches;
+
+      if (!isDesktop) {
+        const stickyHeight = canvasRef.current?.parentElement?.offsetHeight || 0;
+        const rect = el.getBoundingClientRect();
+        // Leave a 16px visual gap below the sticky canvas
+        const targetViewportY = stickyHeight + 16;
+        const scrollDelta = rect.top - targetViewportY;
+        
+        window.scrollBy({ top: scrollDelta, behavior: 'smooth' });
+      }
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, [activeColorIdx]);
+
   const fpsRef = useRef<HTMLSpanElement>(null);
   const timeInfoRef = useRef<HTMLParagraphElement>(null);
   const resolutionInfoRef = useRef<HTMLSpanElement>(null);
