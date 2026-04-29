@@ -32,6 +32,9 @@ uniform float u_swirl;
 uniform float u_meshBlur;
 uniform vec2 u_resolution;
 
+uniform float u_baseType;
+uniform float u_metaballsCount;
+
 out vec4 fragColor;
 in vec2 v_uv;
 
@@ -63,22 +66,56 @@ void main() {
   vec2 uvRotated = uvMap - .5;
   uvRotated = rotate(-3. * u_swirl * radius) * uvRotated + .5;
 
-  vec3 color = vec3(0.);
-  float totalWeight = 0.;
-  
-  float exponent = mix(6.0, 1.5, u_meshBlur);
-  
-  for (int i = 0; i < 4; i++) {
-    vec2 pos = getPosition(i, t);
-    pos = (pos - 0.5) * aspectVec + 0.5;
-    
-    float dist = length(uvRotated - pos);
-    dist = pow(dist, exponent);
-    float weight = 1. / (dist + 1e-3);
-    color += u_colors[i] * weight;
-    totalWeight += weight;
+  if (u_baseType < 0.5) {
+      vec3 color = vec3(0.);
+      float totalWeight = 0.;
+      
+      float exponent = mix(6.0, 1.5, u_meshBlur);
+      
+      for (int i = 0; i < 4; i++) {
+        vec2 pos = getPosition(i, t);
+        pos = (pos - 0.5) * aspectVec + 0.5;
+        
+        float dist = length(uvRotated - pos);
+        dist = pow(dist, exponent);
+        float weight = 1. / (dist + 1e-3);
+        color += u_colors[i] * weight;
+        totalWeight += weight;
+      }
+      fragColor = vec4(color / max(1e-4, totalWeight), 1.0);
+  } else {
+      float tVal = 0.0;
+      vec3 mColor = vec3(0.0);
+      float mWeight = 0.0;
+      
+      vec3 bgColor = u_colors[3]; // color4 is background
+      int mCount = int(u_metaballsCount);
+      
+      for (int i = 0; i < 3; i++) {
+          if (i >= mCount) break;
+          
+          vec2 pos = getPosition(i, t);
+          pos = (pos - 0.5) * aspectVec + 0.5;
+          
+          float d = length(uvRotated - pos);
+          float radiusSq = mix(0.01, 0.15, u_meshBlur); 
+          float e = radiusSq / (d * d + 1e-4);
+          
+          tVal += e;
+          mColor += u_colors[i] * e;
+          mWeight += e;
+      }
+      
+      if (mWeight > 0.0) {
+          mColor /= mWeight;
+      }
+      
+      float edge = 1.0;
+      float borderSoftness = 0.05 + mix(0.0, 0.5, u_meshBlur);
+      float alpha = smoothstep(edge - borderSoftness, edge + borderSoftness, tVal);
+      
+      fragColor = vec4(mix(bgColor, mColor, alpha), 1.0);
   }
-  fragColor = vec4(color / max(1e-4, totalWeight), 1.0);
 }
 `;
 
@@ -509,6 +546,37 @@ function HSVColorPicker({ color, onChange }: { color: string, onChange: (c: stri
   );
 }
 
+function ToggleButtonGroup({ 
+  label, 
+  options, 
+  value, 
+  onChange, 
+  disabled = false 
+}: { 
+  label: string; 
+  options: { label: string | number; value: any }[]; 
+  value: any; 
+  onChange: (val: any) => void; 
+  disabled?: boolean; 
+}) {
+  return (
+    <div className={`space-y-2 flex-1 transition-opacity duration-300 ${disabled ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
+      <div className="text-[11px] font-mono text-white/60 mb-1">{label}</div>
+      <div className="flex bg-white/10 p-0 rounded-full h-8">
+        {options.map((opt, i) => (
+          <button 
+            key={i}
+            className={`flex-1 flex items-center justify-center h-full text-[10px] uppercase tracking-wider rounded-full transition-all ${value === opt.value ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
+            onClick={() => onChange(opt.value)}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function HalftoneMeshGradient() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
@@ -533,6 +601,9 @@ export default function HalftoneMeshGradient() {
   const [contrast, setContrast] = useState(1.15);
   const [gridNoise, setGridNoise] = useState(0.2);
   const[softness, setSoftness] = useState(0.0);
+
+  const [baseType, setBaseType] = useState<number>(0);
+  const [metaballsCount, setMetaballsCount] = useState<number>(3);
 
   const [activeColorIdx, setActiveColorIdx] = useState<number | null>(null);
   const colorsRef = useRef<HTMLDivElement>(null);
@@ -577,19 +648,22 @@ export default function HalftoneMeshGradient() {
   const controlsRef = useRef({
     color1, color2, color3, color4,
     animationSpeed, meshDistortion, meshSwirl, meshBlur, dotSize, contrast, gridNoise, softness,
-    mode, dotColorFront, dotColorBack, dotType, dotGrid, dotRadius, dotContrast
+    mode, dotColorFront, dotColorBack, dotType, dotGrid, dotRadius, dotContrast,
+    baseType, metaballsCount
   });
 
   useEffect(() => {
     controlsRef.current = {
       color1, color2, color3, color4,
       animationSpeed, meshDistortion, meshSwirl, meshBlur, dotSize, contrast, gridNoise, softness,
-      mode, dotColorFront, dotColorBack, dotType, dotGrid, dotRadius, dotContrast
+      mode, dotColorFront, dotColorBack, dotType, dotGrid, dotRadius, dotContrast,
+      baseType, metaballsCount
     };
   },[
     color1, color2, color3, color4,
     animationSpeed, meshDistortion, meshSwirl, meshBlur, dotSize, contrast, gridNoise, softness,
-    mode, dotColorFront, dotColorBack, dotType, dotGrid, dotRadius, dotContrast
+    mode, dotColorFront, dotColorBack, dotType, dotGrid, dotRadius, dotContrast,
+    baseType, metaballsCount
   ]);
 
   useEffect(() => {
@@ -656,6 +730,8 @@ export default function HalftoneMeshGradient() {
     const locSwirl = gl.getUniformLocation(prog1, 'u_swirl');
     const locMeshBlur = gl.getUniformLocation(prog1, 'u_meshBlur');
     const locRes1 = gl.getUniformLocation(prog1, 'u_resolution');
+    const locBaseType = gl.getUniformLocation(prog1, 'u_baseType');
+    const locMetaballsCount = gl.getUniformLocation(prog1, 'u_metaballsCount');
 
     const locImageCmyk = gl.getUniformLocation(prog2Cmyk, 'u_image');
     const locSizeCmyk = gl.getUniformLocation(prog2Cmyk, 'u_size');
@@ -741,10 +817,19 @@ export default function HalftoneMeshGradient() {
         rgb3 = hexToRGB(c.color3);
         rgb4 = hexToRGB(c.color4);
       } else {
-        rgb1 =[1.0, 1.0, 1.0];
-        rgb2 =[0.66, 0.66, 0.66];
-        rgb3 = [0.33, 0.33, 0.33];
-        rgb4 = [0.0, 0.0, 0.0];
+        if (c.baseType === 1) { 
+          // For Gooey base in Dots mode (Gradient B):
+          rgb1 = [0.0, 0.0, 0.0];
+          rgb2 = [0.2, 0.2, 0.2];
+          rgb3 = [0.3, 0.3, 0.3];
+          rgb4 = [1.0, 1.0, 1.0];
+        } else {
+          // For Mesh base in Dots mode (Gradient A):
+          rgb1 = [0.0, 0.0, 0.0];
+          rgb2 = [0.33, 0.33, 0.33];
+          rgb3 = [0.66, 0.66, 0.66];
+          rgb4 = [1.0, 1.0, 1.0];
+        }
       }
       
       gl.uniform3fv(locColors, new Float32Array([...rgb1, ...rgb2, ...rgb3, ...rgb4]));
@@ -752,6 +837,8 @@ export default function HalftoneMeshGradient() {
       gl.uniform1f(locDistortion, c.meshDistortion);
       gl.uniform1f(locSwirl, c.meshSwirl);
       gl.uniform1f(locMeshBlur, c.meshBlur);
+      if (locBaseType) gl.uniform1f(locBaseType, c.baseType);
+      if (locMetaballsCount) gl.uniform1f(locMetaballsCount, c.metaballsCount);
 
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
@@ -850,28 +937,39 @@ export default function HalftoneMeshGradient() {
 
           <div className="relative mb-6" ref={colorsRef}>
             {mode === 'cmyk' ? (
-              <div className="grid grid-cols-4 gap-2">
+              <div 
+                className="grid gap-2" 
+                style={{ 
+                  gridTemplateColumns: `repeat(${baseType === 0 ? 4 : (1 + metaballsCount)}, minmax(0, 1fr))` 
+                }}
+              >
                 {[
-                  { c: color1, set: setColor1 },
-                  { c: color2, set: setColor2 },
-                  { c: color3, set: setColor3 },
-                  { c: color4, set: setColor4 },
-                ].map((item, i) => (
+                  { c: color1, set: setColor1, visible: true },
+                  { c: color2, set: setColor2, visible: baseType === 0 || metaballsCount >= 2 },
+                  { c: color3, set: setColor3, visible: baseType === 0 || metaballsCount >= 3 },
+                  { c: color4, set: setColor4, visible: true },
+                ].map((item, i) => item.visible ? (
                   <button
                     key={i}
-                    className={`h-10 w-full rounded border flex flex-col cursor-pointer transition-all shadow-lg overflow-hidden ${
+                    className={`h-10 w-full rounded border flex flex-col cursor-pointer transition-all shadow-lg overflow-hidden relative ${
                       activeColorIdx === i ? 'border-white/90 scale-105 z-10 shadow-white/20' : 'border-white/20 hover:scale-105 hover:border-white/40'
                     }`}
                     style={{ backgroundColor: item.c }}
                     onClick={() => setActiveColorIdx(activeColorIdx === i ? null : i)}
-                  />
-                ))}
+                  >
+                    {baseType === 1 && i === 3 && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-[10px] uppercase font-bold" style={{ color: getTextColorForBg(item.c) }}>
+                        BG
+                      </div>
+                    )}
+                  </button>
+                ) : null)}
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  { c: dotColorFront, set: setDotColorFront, label: 'Front' },
-                  { c: dotColorBack, set: setDotColorBack, label: 'Back' },
+                  { c: dotColorFront, set: setDotColorFront, label: '' },
+                  { c: dotColorBack, set: setDotColorBack, label: 'BG' },
                 ].map((item, i) => (
                   <button
                     key={i}
@@ -916,12 +1014,34 @@ export default function HalftoneMeshGradient() {
 
           <section>
             <h3 className="text-[10px] font-mono uppercase tracking-widest text-white/90 mb-4 flex items-center gap-2">
-              <span className={`w-1 h-3 ${mode === 'cmyk' ? 'bg-[#35D926]' : 'bg-[#CDD6DC]'}`}></span> Mesh Properties
+              <span className={`w-1 h-3 ${mode === 'cmyk' ? 'bg-[#35D926]' : 'bg-[#CDD6DC]'}`}></span> Properties
             </h3>
             <div className="space-y-4">
+              <div className="flex gap-4">
+                <ToggleButtonGroup
+                  label="Type"
+                  value={baseType}
+                  onChange={setBaseType}
+                  options={[
+                    { label: 'Aurora', value: 0 },
+                    { label: 'Blobs', value: 1 }
+                  ]}
+                />
+                <ToggleButtonGroup
+                  label="Blob Count"
+                  value={metaballsCount}
+                  onChange={setMetaballsCount}
+                  options={[
+                    { label: 1, value: 1 },
+                    { label: 2, value: 2 },
+                    { label: 3, value: 3 }
+                  ]}
+                  disabled={baseType === 0}
+                />
+              </div>
               <SliderControl label="Distortion" value={meshDistortion} min={0} max={2} step={0.01} onChange={setMeshDistortion} />
               <SliderControl label="Swirl" value={meshSwirl} min={0} max={1} step={0.01} onChange={setMeshSwirl} />
-              <SliderControl label="Mesh Blur" value={meshBlur} min={0} max={1} step={0.01} onChange={setMeshBlur} />
+              <SliderControl label="Spread" value={meshBlur} min={0} max={1} step={0.01} onChange={setMeshBlur} />
               <SliderControl label="Animation Speed" value={animationSpeed} min={0} max={3} step={0.01} onChange={setAnimationSpeed} />
             </div>
           </section>
@@ -945,40 +1065,24 @@ export default function HalftoneMeshGradient() {
               </h3>
               <div className="space-y-4">
                 <div className="flex gap-4">
-                  <div className="space-y-2 flex-1">
-                    <div className="text-[11px] font-mono text-white/60 mb-1">Type</div>
-                    <div className="flex bg-white/10 p-0 rounded-full h-8">
-                      <button 
-                        className={`flex-1 flex items-center justify-center h-full text-[10px] uppercase tracking-wider rounded-full transition-all ${dotType === 0 ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
-                        onClick={() => setDotType(0)}
-                      >
-                        Classic
-                      </button>
-                      <button 
-                        className={`flex-1 flex items-center justify-center h-full text-[10px] uppercase tracking-wider rounded-full transition-all ${dotType === 1 ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
-                        onClick={() => setDotType(1)}
-                      >
-                        Gooey
-                      </button>
-                    </div>
-                  </div>
-                  <div className="space-y-2 flex-1">
-                    <div className="text-[11px] font-mono text-white/60 mb-1">Grid</div>
-                    <div className="flex bg-white/10 p-0 rounded-full h-8">
-                      <button 
-                        className={`flex-1 flex items-center justify-center h-full text-[10px] uppercase tracking-wider rounded-full transition-all ${dotGrid === 0 ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
-                        onClick={() => setDotGrid(0)}
-                      >
-                        Square
-                      </button>
-                      <button 
-                        className={`flex-1 flex items-center justify-center h-full text-[10px] uppercase tracking-wider rounded-full transition-all ${dotGrid === 1 ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
-                        onClick={() => setDotGrid(1)}
-                      >
-                        Hex
-                      </button>
-                    </div>
-                  </div>
+                  <ToggleButtonGroup
+                    label="Type"
+                    value={dotType}
+                    onChange={setDotType}
+                    options={[
+                      { label: 'Classic', value: 0 },
+                      { label: 'Gooey', value: 1 }
+                    ]}
+                  />
+                  <ToggleButtonGroup
+                    label="Grid"
+                    value={dotGrid}
+                    onChange={setDotGrid}
+                    options={[
+                      { label: 'Square', value: 0 },
+                      { label: 'Hex', value: 1 }
+                    ]}
+                  />
                 </div>
 
                 <SliderControl label="Dot Size" value={dotSize} min={0.01} max={1} step={0.01} onChange={setDotSize} />
