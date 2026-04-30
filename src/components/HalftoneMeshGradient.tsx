@@ -1006,7 +1006,7 @@ export default function HalftoneMeshGradient() {
                   <button
                     key={i}
                     className={`h-10 w-full rounded ring-offset-0 flex flex-col cursor-pointer transition-all shadow-lg overflow-hidden relative ${
-                      activeColorIdx === i ? 'ring-1 ring-white/90 scale-105 z-10 shadow-white/20' : 'ring-1 ring-white/15 hover:scale-105 hover:ring-white/40'
+                      activeColorIdx === i ? 'ring-1 ring-white/90 scale-105 z-10 shadow-white/20' : 'ring-1 ring-white/15 hover:scale-105'
                     }`}
                     style={{ backgroundColor: item.c }}
                     onClick={() => setActiveColorIdx(activeColorIdx === i ? null : i)}
@@ -1028,7 +1028,7 @@ export default function HalftoneMeshGradient() {
                   <button
                     key={i}
                     className={`h-10 w-full flex-1 rounded ring-offset-0 flex flex-col cursor-pointer transition-all shadow-lg overflow-hidden relative ${
-                      activeColorIdx === i ? 'ring-1 ring-white/90 scale-105 z-10 shadow-white/20' : 'ring-1 ring-white/15 hover:scale-105 hover:ring-white/40'
+                      activeColorIdx === i ? 'ring-1 ring-white/90 scale-105 z-10 shadow-white/20' : 'ring-1 ring-white/15 hover:scale-105'
                     }`}
                     style={{ backgroundColor: item.c }}
                     onClick={() => setActiveColorIdx(activeColorIdx === i ? null : i)}
