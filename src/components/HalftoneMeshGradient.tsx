@@ -959,7 +959,7 @@ export default function HalftoneMeshGradient() {
               {isBirthdayMode ? (
                 <>
                   Happy Birthday<br/>
-                  <span className="font-extrabold">Kiki ( ⸝⸝•ᴗ•⸝⸝ )💚</span>
+                  <span className="font-extrabold">Kiki ⸝⸝•ᴗ•⸝⸝)💚</span>
                 </>
               ) : (
                 <>
