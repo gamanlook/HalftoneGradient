@@ -955,8 +955,8 @@ export default function HalftoneMeshGradient() {
                 ].map((item, i) => item.visible ? (
                   <button
                     key={i}
-                    className={`h-10 w-full rounded border flex flex-col cursor-pointer transition-all shadow-lg overflow-hidden relative ${
-                      activeColorIdx === i ? 'border-white/90 scale-105 z-10 shadow-white/20' : 'border-white/20 hover:scale-105 hover:border-white/40'
+                    className={`h-10 w-full rounded ring-offset-0 flex flex-col cursor-pointer transition-all shadow-lg overflow-hidden relative ${
+                      activeColorIdx === i ? 'ring-1 ring-white/90 scale-105 z-10 shadow-white/20' : 'ring-1 ring-white/15 hover:scale-105 hover:ring-white/40'
                     }`}
                     style={{ backgroundColor: item.c }}
                     onClick={() => setActiveColorIdx(activeColorIdx === i ? null : i)}
@@ -977,8 +977,8 @@ export default function HalftoneMeshGradient() {
                 ].map((item, i) => (
                   <button
                     key={i}
-                    className={`h-10 w-full flex-1 rounded border flex flex-col cursor-pointer transition-all shadow-lg overflow-hidden relative ${
-                      activeColorIdx === i ? 'border-white/90 scale-105 z-10 shadow-white/20' : 'border-white/20 hover:scale-105 hover:border-white/40'
+                    className={`h-10 w-full flex-1 rounded ring-offset-0 flex flex-col cursor-pointer transition-all shadow-lg overflow-hidden relative ${
+                      activeColorIdx === i ? 'ring-1 ring-white/90 scale-105 z-10 shadow-white/20' : 'ring-1 ring-white/15 hover:scale-105 hover:ring-white/40'
                     }`}
                     style={{ backgroundColor: item.c }}
                     onClick={() => setActiveColorIdx(activeColorIdx === i ? null : i)}
@@ -1022,7 +1022,7 @@ export default function HalftoneMeshGradient() {
             </h3>
             <div className="space-y-4">
               <ToggleButtonGroup
-                label="Type"
+                label="Shape"
                 value={baseType}
                 onChange={setBaseType}
                 options={[
