@@ -92,6 +92,11 @@ void main() {
       vec3 bgColor = u_colors[3]; // color4 is background
       int mCount = int(u_metaballsCount);
       
+      float sizes[3];
+      sizes[0] = 1.0;
+      sizes[1] = 1.3;
+      sizes[2] = 0.7;
+      
       for (int i = 0; i < 3; i++) {
           if (i >= mCount) break;
           
@@ -99,7 +104,7 @@ void main() {
           pos = (pos - 0.5) * aspectVec + 0.5;
           
           float d = length(uvRotated - pos);
-          float radius = mix(0.1, 0.6, u_meshBlur); 
+          float radius = mix(0.1, 0.6, u_meshBlur) * sizes[i]; 
           float e = exp(-(d * d) / (radius * radius));
           
           tVal += e;
