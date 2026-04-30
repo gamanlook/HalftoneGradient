@@ -408,15 +408,15 @@ function SliderControl({ label, value, min, max, step, onChange }: SliderControl
   );
 }
 
-function hexToHsv(hex: string) {
+function hexToHsb(hex: string) {
   if (hex.startsWith('#')) hex = hex.slice(1);
   if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
   let r = parseInt(hex.substring(0, 2), 16) / 255;
   let g = parseInt(hex.substring(2, 4), 16) / 255;
-  let b = parseInt(hex.substring(4, 6), 16) / 255;
+  let bVal = parseInt(hex.substring(4, 6), 16) / 255;
 
-  let max = Math.max(r, g, b), min = Math.min(r, g, b);
-  let h = 0, s = 0, v = max;
+  let max = Math.max(r, g, bVal), min = Math.min(r, g, bVal);
+  let h = 0, s = 0, b = max;
 
   let d = max - min;
   s = max === 0 ? 0 : d / max;
@@ -425,36 +425,36 @@ function hexToHsv(hex: string) {
     h = 0; // achromatic
   } else {
     switch (max) {
-      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-      case g: h = (b - r) / d + 2; break;
-      case b: h = (r - g) / d + 4; break;
+      case r: h = (g - bVal) / d + (g < bVal ? 6 : 0); break;
+      case g: h = (bVal - r) / d + 2; break;
+      case bVal: h = (r - g) / d + 4; break;
     }
     h /= 6;
   }
 
-  return { h: h * 360, s: s * 100, v: v * 100 };
+  return { h: h * 360, s: s * 100, b: b * 100 };
 }
 
-function hsvToHex(h: number, s: number, v: number) {
+function hsbToHex(h: number, s: number, b: number) {
   let hNormalized = (h % 360) / 360;
   if (hNormalized < 0) hNormalized += 1;
   let sNormalized = Math.max(0, Math.min(100, s)) / 100;
-  let vNormalized = Math.max(0, Math.min(100, v)) / 100;
+  let bNormalized = Math.max(0, Math.min(100, b)) / 100;
 
-  let r = 0, g = 0, b = 0;
+  let r = 0, g = 0, bVal = 0;
   let i = Math.floor(hNormalized * 6);
   let f = hNormalized * 6 - i;
-  let p = vNormalized * (1 - sNormalized);
-  let q = vNormalized * (1 - f * sNormalized);
-  let t = vNormalized * (1 - (1 - f) * sNormalized);
+  let p = bNormalized * (1 - sNormalized);
+  let q = bNormalized * (1 - f * sNormalized);
+  let t = bNormalized * (1 - (1 - f) * sNormalized);
 
   switch (i % 6) {
-    case 0: r = vNormalized; g = t; b = p; break;
-    case 1: r = q; g = vNormalized; b = p; break;
-    case 2: r = p; g = vNormalized; b = t; break;
-    case 3: r = p; g = q; b = vNormalized; break;
-    case 4: r = t; g = p; b = vNormalized; break;
-    case 5: r = vNormalized; g = p; b = q; break;
+    case 0: r = bNormalized; g = t; bVal = p; break;
+    case 1: r = q; g = bNormalized; bVal = p; break;
+    case 2: r = p; g = bNormalized; bVal = t; break;
+    case 3: r = p; g = q; bVal = bNormalized; break;
+    case 4: r = t; g = p; bVal = bNormalized; break;
+    case 5: r = bNormalized; g = p; bVal = q; break;
   }
 
   const toHex = (x: number) => {
@@ -462,55 +462,55 @@ function hsvToHex(h: number, s: number, v: number) {
     return hex.length === 1 ? '0' + hex : hex;
   };
 
-  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  return `#${toHex(r)}${toHex(g)}${toHex(bVal)}`;
 }
 
-function HSVColorPicker({ color, onChange }: { color: string, onChange: (c: string) => void }) {
-  const [hsv, setHsv] = useState(() => hexToHsv(color));
+function HSBColorPicker({ color, onChange }: { color: string, onChange: (c: string) => void }) {
+  const [hsb, setHsb] = useState(() => hexToHsb(color));
 
   useEffect(() => {
-    const currentHex = hsvToHex(hsv.h, hsv.s, hsv.v);
+    const currentHex = hsbToHex(hsb.h, hsb.s, hsb.b);
     if (color.toLowerCase() !== currentHex.toLowerCase()) {
-      setHsv(hexToHsv(color));
+      setHsb(hexToHsb(color));
     }
-  }, [color, hsv]);
+  }, [color, hsb]);
 
   const handleH = (h: number) => {
-    const newHsv = { ...hsv, h };
-    setHsv(newHsv);
-    onChange(hsvToHex(newHsv.h, newHsv.s, newHsv.v));
+    const newHsb = { ...hsb, h };
+    setHsb(newHsb);
+    onChange(hsbToHex(newHsb.h, newHsb.s, newHsb.b));
   };
   const handleS = (s: number) => {
-    const newHsv = { ...hsv, s };
-    setHsv(newHsv);
-    onChange(hsvToHex(newHsv.h, newHsv.s, newHsv.v));
+    const newHsb = { ...hsb, s };
+    setHsb(newHsb);
+    onChange(hsbToHex(newHsb.h, newHsb.s, newHsb.b));
   };
-  const handleV = (v: number) => {
-    const newHsv = { ...hsv, v };
-    setHsv(newHsv);
-    onChange(hsvToHex(newHsv.h, newHsv.s, newHsv.v));
+  const handleB = (b: number) => {
+    const newHsb = { ...hsb, b };
+    setHsb(newHsb);
+    onChange(hsbToHex(newHsb.h, newHsb.s, newHsb.b));
   };
 
   const offset = 'var(--slider-half)';
   const size = 'var(--slider-height)';
 
-  const sColor0 = hsvToHex(hsv.h, 0, hsv.v);
-  const sColor100 = hsvToHex(hsv.h, 100, hsv.v);
-  const vColor0 = '#000000';
-  const vColor100 = hsvToHex(hsv.h, hsv.s, 100);
+  const sColor0 = hsbToHex(hsb.h, 0, hsb.b);
+  const sColor100 = hsbToHex(hsb.h, 100, hsb.b);
+  const bColor0 = '#000000';
+  const bColor100 = hsbToHex(hsb.h, hsb.s, 100);
 
   return (
     <div className="space-y-5">
       {/* H */}
       <div className="space-y-2">
         <div className="flex justify-between text-[11px] font-mono text-white/60">
-            <span>Hue</span><span>{Math.round(hsv.h)}°</span>
+            <span>Hue</span><span>{Math.round(hsb.h)}°</span>
         </div>
         <div className="custom-slider-wrapper" style={{
           background: `linear-gradient(to right, #F09081 0px, #F09081 ${offset}, #C9CA46 calc(${offset} + (100% - ${size}) * 0.1666), #74CF6D calc(${offset} + (100% - ${size}) * 0.3333), #2CC5C5 calc(${offset} + (100% - ${size}) * 0.5), #87ADFA calc(${offset} + (100% - ${size}) * 0.6666), #D792D4 calc(${offset} + (100% - ${size}) * 0.8333), #F09081 calc(100% - ${offset}), #F09081 100%)`,
-          '--percent': `${(hsv.h / 360) * 100}%`
+          '--percent': `${(hsb.h / 360) * 100}%`
         } as React.CSSProperties}>
-          <input type="range" min="0" max="360" step="1" value={hsv.h} onChange={(e) => handleH(parseFloat(e.target.value))} className="custom-slider-native" />
+          <input type="range" min="0" max="360" step="1" value={hsb.h} onChange={(e) => handleH(parseFloat(e.target.value))} className="custom-slider-native" />
           <span className="custom-slider-thumb-slot" aria-hidden="true">
             <span className="custom-slider-thumb-visual" />
           </span>
@@ -520,29 +520,29 @@ function HSVColorPicker({ color, onChange }: { color: string, onChange: (c: stri
       {/* S */}
       <div className="space-y-2">
         <div className="flex justify-between text-[11px] font-mono text-white/60">
-            <span>Saturation</span><span>{Math.round(hsv.s)}%</span>
+            <span>Saturation</span><span>{Math.round(hsb.s)}%</span>
         </div>
         <div className="custom-slider-wrapper" style={{
           background: `linear-gradient(to right, ${sColor0} 0px, ${sColor0} ${offset}, ${sColor100} calc(100% - ${offset}), ${sColor100} 100%)`,
-          '--percent': `${hsv.s}%`
+          '--percent': `${hsb.s}%`
         } as React.CSSProperties}>
-          <input type="range" min="0" max="100" step="1" value={hsv.s} onChange={(e) => handleS(parseFloat(e.target.value))} className="custom-slider-native" />
+          <input type="range" min="0" max="100" step="1" value={hsb.s} onChange={(e) => handleS(parseFloat(e.target.value))} className="custom-slider-native" />
           <span className="custom-slider-thumb-slot" aria-hidden="true">
             <span className="custom-slider-thumb-visual" />
           </span>
         </div>
       </div>
 
-      {/* V */}
+      {/* B */}
       <div className="space-y-2">
         <div className="flex justify-between text-[11px] font-mono text-white/60">
-            <span>Value</span><span>{Math.round(hsv.v)}%</span>
+            <span>Brightness</span><span>{Math.round(hsb.b)}%</span>
         </div>
         <div className="custom-slider-wrapper" style={{
-          background: `linear-gradient(to right, ${vColor0} 0px, ${vColor0} ${offset}, ${vColor100} calc(100% - ${offset}), ${vColor100} 100%)`,
-          '--percent': `${hsv.v}%`
+          background: `linear-gradient(to right, ${bColor0} 0px, ${bColor0} ${offset}, ${bColor100} calc(100% - ${offset}), ${bColor100} 100%)`,
+          '--percent': `${hsb.b}%`
         } as React.CSSProperties}>
-          <input type="range" min="0" max="100" step="1" value={hsv.v} onChange={(e) => handleV(parseFloat(e.target.value))} className="custom-slider-native" />
+          <input type="range" min="0" max="100" step="1" value={hsb.b} onChange={(e) => handleB(parseFloat(e.target.value))} className="custom-slider-native" />
           <span className="custom-slider-thumb-slot" aria-hidden="true">
             <span className="custom-slider-thumb-visual" />
           </span>
@@ -586,11 +586,16 @@ function ToggleButtonGroup({
 export default function HalftoneMeshGradient() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
+  const [isBirthdayMode, setIsBirthdayMode] = useState(() => {
+    const today = new Date();
+    return today.getMonth() === 8 && today.getDate() === 24;
+  });
+
   const[mode, setMode] = useState<'cmyk' | 'dots'>('cmyk');
-  const[color1, setColor1] = useState('#6688d6');
-  const [color2, setColor2] = useState('#1e1782');
-  const [color3, setColor3] = useState('#291cd9');
-  const [color4, setColor4] = useState('#22f73a');
+  const[color1, setColor1] = useState(isBirthdayMode ? '#68871E' : '#6688d6');
+  const [color2, setColor2] = useState(isBirthdayMode ? '#10780E' : '#1e1782');
+  const [color3, setColor3] = useState(isBirthdayMode ? '#034F14' : '#291cd9');
+  const [color4, setColor4] = useState(isBirthdayMode ? '#97C27A' : '#22f73a');
   
   const[dotColorFront, setDotColorFront] = useState('#CDD6DC');
   const [dotColorBack, setDotColorBack] = useState('#000000');
@@ -599,21 +604,49 @@ export default function HalftoneMeshGradient() {
   const [dotRadius, setDotRadius] = useState<number>(0.8);
   const [dotContrast, setDotContrast] = useState<number>(0.5);
 
-  const[animationSpeed, setAnimationSpeed] = useState(0.6);
+  const[animationSpeed, setAnimationSpeed] = useState(isBirthdayMode ? 0.3 : 0.6);
   const [meshDistortion, setMeshDistortion] = useState(0.8);
   const [meshSwirl, setMeshSwirl] = useState(0.1);
-  const [meshBlur, setMeshBlur] = useState(0.5);
-  const [mixing, setMixing] = useState(0.5);
+  const [meshBlur, setMeshBlur] = useState(isBirthdayMode ? 0.8 : 0.5);
+  const [mixing, setMixing] = useState(isBirthdayMode ? 0.9 : 0.5);
   const[dotSize, setDotSize] = useState(0.4);
-  const [contrast, setContrast] = useState(1.15);
+  const [contrast, setContrast] = useState(isBirthdayMode ? 1.5 : 1.15);
   const [gridNoise, setGridNoise] = useState(0.2);
-  const[softness, setSoftness] = useState(0.0);
+  const[softness, setSoftness] = useState(isBirthdayMode ? 0.7 : 0.0);
 
-  const [baseType, setBaseType] = useState<number>(0);
+  const [baseType, setBaseType] = useState<number>(isBirthdayMode ? 1 : 0);
   const [metaballsCount, setMetaballsCount] = useState<number>(3);
 
   const [activeColorIdx, setActiveColorIdx] = useState<number | null>(null);
   const colorsRef = useRef<HTMLDivElement>(null);
+
+  const clickCount = useRef(0);
+  const clickTimeout = useRef<number | null>(null);
+
+  const handleSecretClick = () => {
+    clickCount.current += 1;
+    if (clickCount.current === 1) {
+      clickTimeout.current = window.setTimeout(() => {
+        clickCount.current = 0;
+      }, 3000);
+    }
+    
+    if (clickCount.current >= 13) {
+      if (clickTimeout.current) clearTimeout(clickTimeout.current);
+      clickCount.current = 0;
+      setIsBirthdayMode(true);
+      setColor1('#68871E');
+      setColor2('#10780E');
+      setColor3('#034F14');
+      setColor4('#97C27A');
+      setBaseType(1);
+      setMixing(0.9);
+      setMeshBlur(0.8);
+      setAnimationSpeed(0.3);
+      setSoftness(0.7);
+      setContrast(1.5);
+    }
+  };
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -907,7 +940,10 @@ export default function HalftoneMeshGradient() {
 
   return (
     <div className="w-full flex-1 bg-[#111113] text-[#E0E0E0] font-sans flex flex-col md:flex-row md:overflow-hidden">
-      <div className="w-full aspect-square max-h-[60dvh] md:max-h-none md:aspect-auto md:h-full md:flex-1 relative bg-[#000] overflow-hidden shrink-0 group sticky top-0 z-30 shadow-[0_0_20px_rgba(17,17,19,0.9)] md:shadow-none">
+      <div 
+        className="w-full aspect-square max-h-[60dvh] md:max-h-none md:aspect-auto md:h-full md:flex-1 relative bg-[#000] overflow-hidden shrink-0 group sticky top-0 z-30 shadow-[0_0_20px_rgba(17,17,19,0.9)] md:shadow-none"
+        onClick={handleSecretClick}
+      >
         <canvas 
           ref={canvasRef} 
           className="absolute inset-0 block w-full h-full z-0"
@@ -920,8 +956,17 @@ export default function HalftoneMeshGradient() {
           
           <header className="mb-6">
             <h1 className="text-3xl font-light text-white/90 leading-[1]">
-              Halftone<br/>
-              <span className="font-extrabold italic">Gradient</span>
+              {isBirthdayMode ? (
+                <>
+                  Happy Birthday<br/>
+                  <span className="font-extrabold">Kiki ( ⸝⸝•ᴗ•⸝⸝ )💚</span>
+                </>
+              ) : (
+                <>
+                  Halftone<br/>
+                  <span className="font-extrabold italic">Gradient</span>
+                </>
+              )}
             </h1>
             <div className="mt-2 flex gap-4 text-[10px] font-mono text-white/40">
               <span ref={fpsRef}>60.0 FPS</span>
@@ -999,7 +1044,7 @@ export default function HalftoneMeshGradient() {
             {activeColorIdx !== null && (
               <div className="absolute top-[52px] left-0 right-0 p-5 bg-[#1A1A1D] border border-white/10 rounded-xl shadow-[0_16px_48px_rgba(0,0,0,1)] z-50">
                 {mode === 'cmyk' ? (
-                  <HSVColorPicker 
+                  <HSBColorPicker 
                      color={[color1, color2, color3, color4][activeColorIdx]}
                      onChange={(c) => {
                        if (activeColorIdx === 0) setColor1(c);
@@ -1009,7 +1054,7 @@ export default function HalftoneMeshGradient() {
                      }}
                   />
                 ) : (
-                  <HSVColorPicker 
+                  <HSBColorPicker 
                      color={[dotColorFront, dotColorBack][activeColorIdx]}
                      onChange={(c) => {
                        if (activeColorIdx === 0) setDotColorFront(c);
