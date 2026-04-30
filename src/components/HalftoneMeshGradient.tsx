@@ -99,8 +99,8 @@ void main() {
           pos = (pos - 0.5) * aspectVec + 0.5;
           
           float d = length(uvRotated - pos);
-          float radiusSq = mix(0.01, 0.25, u_meshBlur); 
-          float e = radiusSq / (d * d + 1e-4);
+          float radius = mix(0.1, 0.6, u_meshBlur); 
+          float e = exp(-(d * d) / (radius * radius));
           
           tVal += e;
           mColor += u_colors[i] * e;
@@ -111,8 +111,8 @@ void main() {
           mColor /= mWeight;
       }
       
-      float edge = 1.0;
-      float borderSoftness = mix(0.01, 1.5, u_mixing);
+      float edge = 0.5;
+      float borderSoftness = mix(0.01, 0.8, u_mixing);
       float alpha = smoothstep(edge - borderSoftness, edge + borderSoftness, tVal);
       
       fragColor = vec4(mix(bgColor, mColor, alpha), 1.0);
@@ -823,8 +823,8 @@ export default function HalftoneMeshGradient() {
         if (c.baseType === 1) { 
           // For Gooey base in Dots mode (Gradient B):
           rgb1 = [0.0, 0.0, 0.0];
-          rgb2 = [0.2, 0.2, 0.2];
-          rgb3 = [0.3, 0.3, 0.3];
+          rgb2 = [0.0, 0.0, 0.0];
+          rgb3 = [0.0, 0.0, 0.0];
           rgb4 = [1.0, 1.0, 1.0];
         } else {
           // For Mesh base in Dots mode (Gradient A):
@@ -935,7 +935,7 @@ export default function HalftoneMeshGradient() {
               className={`flex-1 flex items-center justify-center h-9 text-[11px] uppercase tracking-wider rounded-full transition-all font-semibold ${mode === 'dots' ? 'bg-white/20 text-white shadow-sm' : 'text-white/40 hover:text-white/80'}`}
               onClick={() => { setMode('dots'); setActiveColorIdx(null); }}
             >
-              Dots
+              MONO
             </button>
           </div>
 
@@ -1049,7 +1049,7 @@ export default function HalftoneMeshGradient() {
                 </>
               )}
               {baseType === 1 && (
-                <SliderControl label="Mixing" value={mixing} min={0} max={1} step={0.01} onChange={setMixing} />
+                <SliderControl label="Blob Softness" value={mixing} min={0} max={1} step={0.01} onChange={setMixing} />
               )}
               <SliderControl label="Spread" value={meshBlur} min={0} max={1} step={0.01} onChange={setMeshBlur} />
               <SliderControl label="Animation Speed" value={animationSpeed} min={0} max={3} step={0.01} onChange={setAnimationSpeed} />
@@ -1064,14 +1064,14 @@ export default function HalftoneMeshGradient() {
               <div className="space-y-4">
                 <SliderControl label="Dot Size" value={dotSize} min={0.01} max={1} step={0.01} onChange={setDotSize} />
                 <SliderControl label="Grid Noise" value={gridNoise} min={0} max={1} step={0.01} onChange={setGridNoise} />
-                <SliderControl label="Softness" value={softness} min={0} max={1} step={0.01} onChange={setSoftness} />
+                <SliderControl label="Dot Softness" value={softness} min={0} max={1} step={0.01} onChange={setSoftness} />
                 <SliderControl label="Contrast" value={contrast} min={0} max={2} step={0.01} onChange={setContrast} />
               </div>
             </section>
           ) : (
             <section>
               <h3 className="text-[10px] font-mono uppercase tracking-widest text-white/90 mb-4 flex items-center gap-2">
-                <span className="w-1 h-3 bg-white"></span> Dots Engine
+                <span className="w-1 h-3 bg-white"></span> MONO Engine
               </h3>
               <div className="space-y-4">
                 <div className="flex gap-4">
