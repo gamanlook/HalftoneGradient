@@ -1,6 +1,6 @@
 # Halftone Gradient
 
-<img width="1200" height="720" alt="halftone-gradient" src="https://github.com/user-attachments/assets/05c4e3a3-2cf7-4604-8a38-8f4c52ad159f" />
+<img width="2400" height="1440" alt="halftone-gradient" src="https://github.com/user-attachments/assets/7dda9fe3-85a9-49f2-a3fb-0dc31904a1ae" />
 
 
 <br>
