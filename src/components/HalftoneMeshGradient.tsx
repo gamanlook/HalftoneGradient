@@ -1094,12 +1094,12 @@ export default function HalftoneMeshGradient() {
               )}
               {baseType === 0 && (
                 <>
-                  <SliderControl label="Distortion" value={meshDistortion} min={0} max={2} step={0.01} onChange={setMeshDistortion} />
+                  <SliderControl label="Distortion" value={meshDistortion} min={0} max={1} step={0.01} onChange={setMeshDistortion} />
                   <SliderControl label="Swirl" value={meshSwirl} min={0} max={1} step={0.01} onChange={setMeshSwirl} />
                 </>
               )}
               {baseType === 1 && (
-                <SliderControl label="Blob Softness" value={mixing} min={0} max={1} step={0.01} onChange={setMixing} />
+                <SliderControl label="Blob Softness" value={mixing} min={0} max={2} step={0.01} onChange={setMixing} />
               )}
               <SliderControl label="Spread" value={meshBlur} min={0} max={1} step={0.01} onChange={setMeshBlur} />
               <SliderControl label="Animation Speed" value={animationSpeed} min={0} max={3} step={0.01} onChange={setAnimationSpeed} />
