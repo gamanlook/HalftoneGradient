@@ -2,7 +2,7 @@
 
 <img width="2400" height="1440" alt="halftone-gradient" src="https://github.com/user-attachments/assets/7dda9fe3-85a9-49f2-a3fb-0dc31904a1ae" />
 
-
+<br>
 <br>
 
 👉 [Live Demo](https://halftone-gradient.vercel.app/)
