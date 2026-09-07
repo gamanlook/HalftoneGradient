@@ -1,5 +1,31 @@
 import React, { useRef, useEffect, useState } from 'react';
 
+const BIRTHDAY_CONFIG = {
+  color1: '#FA880F',
+  color2: '#85F05B',
+  color3: '#11D993',
+  color4: '#1F5FDE',
+  baseType: 2,
+  mixing: 0.7,
+  meshBlur: 0.8,
+  animationSpeed: 0.6,
+  softness: 0.5,
+  contrast: 1.15,
+};
+
+const DEFAULT_CONFIG = {
+  color1: '#6688d6',
+  color2: '#1e1782',
+  color3: '#291cd9',
+  color4: '#22f73a',
+  baseType: 0,
+  mixing: 0.5,
+  meshBlur: 0.5,
+  animationSpeed: 0.6,
+  softness: 0.0,
+  contrast: 1.15,
+};
+
 function hexToRGB(hex: string) {
   const r = parseInt(hex.slice(1, 3), 16) / 255;
   const g = parseInt(hex.slice(3, 5), 16) / 255;
@@ -84,7 +110,7 @@ void main() {
         totalWeight += weight;
       }
       fragColor = vec4(color / max(1e-4, totalWeight), 1.0);
-  } else {
+  } else if (u_baseType < 1.5) {
       float tVal = 0.0;
       vec3 mColor = vec3(0.0);
       float mWeight = 0.0;
@@ -121,6 +147,56 @@ void main() {
       float alpha = smoothstep(edge - borderSoftness, edge + borderSoftness, tVal);
       
       fragColor = vec4(mix(bgColor, mColor, alpha), 1.0);
+  } else { // Heart: continuous outward colour transport
+      vec2 p = (v_uv - 0.5) * aspectVec;
+      float scale = mix(5.0, 1.5, clamp(u_meshBlur, 0.0, 1.0));
+      p *= scale;
+
+      // Small continuous deformation; preserve the heart's orientation.
+      float warp = clamp(u_distortion, 0.0, 1.0);
+      p.x *= 1.0 + 0.035 * warp * sin(p.y * 3.0 + u_time * 0.7);
+      p.y += 0.018 * warp * sin(p.x * 3.0 - u_time * 0.6);
+      p = rotate(0.035 * u_swirl * sin(u_time * 0.45)) * p;
+
+      // Radial coordinate of similar hearts, not an offset of the outline.
+      // This keeps the cleft and tip as each colour band expands.
+      float lenP = length(p);
+      vec2 direction = p / max(lenP, 1e-6);
+      float lo = 0.0;
+      float hi = 1.2;
+      for (int i = 0; i < 12; i++) {
+          float mid = (lo + hi) * 0.5;
+          vec2 h = direction * mid + vec2(0.0, 0.5);
+          h.x = abs(h.x);
+          float d;
+          if (h.y + h.x > 1.0) {
+              d = length(h - vec2(0.25, 0.75)) - 0.3535534;
+          } else {
+              vec2 q = h - 0.5 * max(h.x + h.y, 0.0);
+              d = min(length(h - vec2(0.0, 1.0)), length(q))
+                  * sign(h.x - h.y);
+          }
+          if (d < 0.0) lo = mid; else hi = mid;
+      }
+      float heartRadius = lenP / max((lo + hi) * 0.5, 1e-4);
+
+      // Flatten the centre gently so it reads as a heart, not a tiny bullseye.
+      float travel = sqrt(heartRadius * heartRadius + 0.36) - 0.6;
+      // Constant phase moves toward increasing radius as time increases.
+      // u_time already includes the UI animation speed: do not multiply twice.
+      float phase = travel * 0.72 - u_time * 1.25;
+      float palettePosition = fract(phase * 0.25) * 4.0;
+      int index = int(floor(palettePosition));
+      float f = fract(palettePosition);
+      float softness = mix(0.20, 1.0, clamp(u_mixing, 0.0, 1.0));
+      float blend = smoothstep(0.5 - 0.5 * softness, 0.5 + 0.5 * softness, f);
+      vec3 c0 = u_colors[0];
+      vec3 c1 = u_colors[1];
+      if (index == 1) { c0 = u_colors[1]; c1 = u_colors[2]; }
+      if (index == 2) { c0 = u_colors[2]; c1 = u_colors[3]; }
+      if (index == 3) { c0 = u_colors[3]; c1 = u_colors[0]; }
+      vec3 color = mix(c0, c1, blend);
+      fragColor = vec4(color, 1.0);
   }
 }
 `;
@@ -592,10 +668,10 @@ export default function HalftoneMeshGradient() {
   });
 
   const[mode, setMode] = useState<'cmyk' | 'dots'>('cmyk');
-  const[color1, setColor1] = useState(isBirthdayMode ? '#68871E' : '#6688d6');
-  const [color2, setColor2] = useState(isBirthdayMode ? '#10780E' : '#1e1782');
-  const [color3, setColor3] = useState(isBirthdayMode ? '#034F14' : '#291cd9');
-  const [color4, setColor4] = useState(isBirthdayMode ? '#97C27A' : '#22f73a');
+  const[color1, setColor1] = useState(isBirthdayMode ? BIRTHDAY_CONFIG.color1 : DEFAULT_CONFIG.color1);
+  const [color2, setColor2] = useState(isBirthdayMode ? BIRTHDAY_CONFIG.color2 : DEFAULT_CONFIG.color2);
+  const [color3, setColor3] = useState(isBirthdayMode ? BIRTHDAY_CONFIG.color3 : DEFAULT_CONFIG.color3);
+  const [color4, setColor4] = useState(isBirthdayMode ? BIRTHDAY_CONFIG.color4 : DEFAULT_CONFIG.color4);
   
   const[dotColorFront, setDotColorFront] = useState('#CDD6DC');
   const [dotColorBack, setDotColorBack] = useState('#000000');
@@ -604,17 +680,17 @@ export default function HalftoneMeshGradient() {
   const [dotRadius, setDotRadius] = useState<number>(0.8);
   const [dotContrast, setDotContrast] = useState<number>(0.5);
 
-  const[animationSpeed, setAnimationSpeed] = useState(isBirthdayMode ? 0.3 : 0.6);
+  const[animationSpeed, setAnimationSpeed] = useState(isBirthdayMode ? BIRTHDAY_CONFIG.animationSpeed : DEFAULT_CONFIG.animationSpeed);
   const [meshDistortion, setMeshDistortion] = useState(0.8);
   const [meshSwirl, setMeshSwirl] = useState(0.1);
-  const [meshBlur, setMeshBlur] = useState(isBirthdayMode ? 0.8 : 0.5);
-  const [mixing, setMixing] = useState(isBirthdayMode ? 0.9 : 0.5);
+  const [meshBlur, setMeshBlur] = useState(isBirthdayMode ? BIRTHDAY_CONFIG.meshBlur : DEFAULT_CONFIG.meshBlur);
+  const [mixing, setMixing] = useState(isBirthdayMode ? BIRTHDAY_CONFIG.mixing : DEFAULT_CONFIG.mixing);
   const[dotSize, setDotSize] = useState(0.4);
-  const [contrast, setContrast] = useState(isBirthdayMode ? 1.5 : 1.15);
+  const [contrast, setContrast] = useState(isBirthdayMode ? BIRTHDAY_CONFIG.contrast : DEFAULT_CONFIG.contrast);
   const [gridNoise, setGridNoise] = useState(0.2);
-  const[softness, setSoftness] = useState(isBirthdayMode ? 0.7 : 0.0);
+  const[softness, setSoftness] = useState(isBirthdayMode ? BIRTHDAY_CONFIG.softness : DEFAULT_CONFIG.softness);
 
-  const [baseType, setBaseType] = useState<number>(isBirthdayMode ? 1 : 0);
+  const [baseType, setBaseType] = useState<number>(isBirthdayMode ? BIRTHDAY_CONFIG.baseType : DEFAULT_CONFIG.baseType);
   const [metaballsCount, setMetaballsCount] = useState<number>(3);
 
   const [activeColorIdx, setActiveColorIdx] = useState<number | null>(null);
@@ -635,16 +711,16 @@ export default function HalftoneMeshGradient() {
       if (clickTimeout.current) clearTimeout(clickTimeout.current);
       clickCount.current = 0;
       setIsBirthdayMode(true);
-      setColor1('#68871E');
-      setColor2('#10780E');
-      setColor3('#034F14');
-      setColor4('#97C27A');
-      setBaseType(1);
-      setMixing(0.9);
-      setMeshBlur(0.8);
-      setAnimationSpeed(0.3);
-      setSoftness(0.7);
-      setContrast(1.5);
+      setColor1(BIRTHDAY_CONFIG.color1);
+      setColor2(BIRTHDAY_CONFIG.color2);
+      setColor3(BIRTHDAY_CONFIG.color3);
+      setColor4(BIRTHDAY_CONFIG.color4);
+      setBaseType(BIRTHDAY_CONFIG.baseType);
+      setMixing(BIRTHDAY_CONFIG.mixing);
+      setMeshBlur(BIRTHDAY_CONFIG.meshBlur);
+      setAnimationSpeed(BIRTHDAY_CONFIG.animationSpeed);
+      setSoftness(BIRTHDAY_CONFIG.softness);
+      setContrast(BIRTHDAY_CONFIG.contrast);
     }
   };
 
@@ -875,8 +951,8 @@ export default function HalftoneMeshGradient() {
       
       gl.uniform3fv(locColors, new Float32Array([...rgb1, ...rgb2, ...rgb3, ...rgb4]));
       
-      gl.uniform1f(locDistortion, c.baseType === 1 ? 0 : c.meshDistortion);
-      gl.uniform1f(locSwirl, c.baseType === 1 ? 0 : c.meshSwirl);
+      gl.uniform1f(locDistortion, c.baseType === 1 || c.baseType === 2 ? 0 : c.meshDistortion);
+      gl.uniform1f(locSwirl, c.baseType === 1 || c.baseType === 2 ? 0 : c.meshSwirl);
       gl.uniform1f(locMeshBlur, c.meshBlur);
       if (locMixing) gl.uniform1f(locMixing, c.mixing);
       if (locBaseType) gl.uniform1f(locBaseType, c.baseType);
@@ -938,6 +1014,19 @@ export default function HalftoneMeshGradient() {
     };
   },[]);
 
+  const currentYear = new Date().getFullYear();
+  const age = currentYear - 2000;
+  
+  const getOrdinalSuffix = (n: number) => {
+    const j = n % 10, k = n % 100;
+    if (j === 1 && k !== 11) return n + "st";
+    if (j === 2 && k !== 12) return n + "nd";
+    if (j === 3 && k !== 13) return n + "rd";
+    return n + "th";
+  };
+  
+  const ageText = getOrdinalSuffix(age);
+
   return (
     <div className="w-full flex-1 bg-[#111113] text-[#E0E0E0] font-sans flex flex-col md:flex-row md:overflow-hidden">
       <div 
@@ -958,8 +1047,8 @@ export default function HalftoneMeshGradient() {
             <h1 className="text-3xl font-light text-white/90 leading-[1]">
               {isBirthdayMode ? (
                 <>
-                  Happy Birthday<br/>
-                  <span className="font-extrabold">Kiki ⸝⸝•ᴗ•⸝⸝)💚</span>
+                  <span className="font-extrabold">Kiki🎂</span><br/>
+                  Happy {ageText} Birthday!
                 </>
               ) : (
                 <>
@@ -994,13 +1083,13 @@ export default function HalftoneMeshGradient() {
               <div 
                 className="grid gap-2" 
                 style={{ 
-                  gridTemplateColumns: `repeat(${baseType === 0 ? 4 : (1 + metaballsCount)}, minmax(0, 1fr))` 
+                  gridTemplateColumns: `repeat(${baseType === 0 || baseType === 2 ? 4 : (1 + metaballsCount)}, minmax(0, 1fr))` 
                 }}
               >
                 {[
                   { c: color1, set: setColor1, visible: true },
-                  { c: color2, set: setColor2, visible: baseType === 0 || metaballsCount >= 2 },
-                  { c: color3, set: setColor3, visible: baseType === 0 || metaballsCount >= 3 },
+                  { c: color2, set: setColor2, visible: baseType === 0 || baseType === 2 || metaballsCount >= 2 },
+                  { c: color3, set: setColor3, visible: baseType === 0 || baseType === 2 || metaballsCount >= 3 },
                   { c: color4, set: setColor4, visible: true },
                 ].map((item, i) => item.visible ? (
                   <button
@@ -1077,7 +1166,8 @@ export default function HalftoneMeshGradient() {
                 onChange={setBaseType}
                 options={[
                   { label: 'Aurora', value: 0 },
-                  { label: 'Blobs', value: 1 }
+                  { label: 'Blobs', value: 1 },
+                  ...(isBirthdayMode ? [{ label: 'Heart', value: 2 }] : [])
                 ]}
               />
               {baseType === 1 && (
@@ -1100,6 +1190,9 @@ export default function HalftoneMeshGradient() {
               )}
               {baseType === 1 && (
                 <SliderControl label="Blob Softness" value={mixing} min={0} max={2} step={0.01} onChange={setMixing} />
+              )}
+              {baseType === 2 && (
+                <SliderControl label="Heart Softness" value={mixing} min={0} max={1} step={0.01} onChange={setMixing} />
               )}
               <SliderControl label="Spread" value={meshBlur} min={0} max={1} step={0.01} onChange={setMeshBlur} />
               <SliderControl label="Animation Speed" value={animationSpeed} min={0} max={3} step={0.01} onChange={setAnimationSpeed} />
